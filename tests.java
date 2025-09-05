@@ -14,6 +14,10 @@ public class Tests {
     }
     }
 
+    /**
+     * Test that a valid ASTERIX message passes the length check.
+     * The message is a real example with the declared length matching the actual length.
+     */
     @Test
     public void testValidMessage() {
         // Example ASTERIX message in hex (same as Python test)
@@ -22,6 +26,10 @@ public class Tests {
         assertTrue(checkAsterixLength(message));
     }
 
+    /**
+     * Test that an invalid ASTERIX message fails the length check.
+     * The message is missing a byte, so the declared length does not match the actual length.
+     */
     @Test
     public void testInvalidMessage() {
         // Remove a byte to make the length invalid
