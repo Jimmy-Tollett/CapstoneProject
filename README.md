@@ -11,6 +11,9 @@ This project is being developed as part of CS4273 - Fall 2025 in collaboration w
     * Flask
     * PyQt (?)
     * Geoplotlib (?)
+    * Pandas
+    * Numpy
+    * csv library
 * Kubernetes
     * K3D
 * Docker
