@@ -1,4 +1,5 @@
 # Capstone Project
+
 ## Fall 2025 Capstone Project
 
 ### Description
@@ -37,6 +38,7 @@ This feature is critical because it:
 Group members are actively researching and aligning on the following:
 * Python/Flask Documentation – [Flask Docs](https://flask.palletsprojects.com/), [Python Docs](https://docs.python.org/3/)
 * Kubernetes Deployment Guides – [Kubernetes Docs](https://kubernetes.io/docs/home/)
+* PostgreSQL Documents - [PostgreSQL Docs](https://www.postgresql.org/docs/17/index.html)
 * Data Parsing Patterns – Tutorials and references for network protocols and message validation
 * Supplemental Resources – YouTube tutorials, articles, and example projects
 
