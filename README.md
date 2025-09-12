@@ -63,21 +63,25 @@ Jimmy Tollett
 
 ## Dev quickstart
 
-Open a terminal in the repo directory.
+- Open a terminal in the repo directory.
 
-- If you edited `requirements.txt` or the Dockerfile,
-  rebuild the container image:
+- Start the container:
+
+```bash
+docker compose up
+```
+
+- If that doesn't work, try:
 
 ```bash
 docker build -t smo-api .
-```
-
-Start the container:
-
-```bash
 docker run --rm -it -p 8000:8000 -v "${PWD}/data:/capstone/data" smo-api
 ```
 
 Open http://localhost:8000 and/or http://localhost:8000/healthz to verify that it's working.
 
-Note that changes to Python files are loaded automatically via Flask's `--debug` flag, and that additions to `/data` are mounted live inside the volume.
+- When you're done, tear it down:
+
+```bash
+docker compose down
+```

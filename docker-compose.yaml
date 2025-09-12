@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env.local
+    volumes:
+      - ./data:/capstone/data # live-mount data folder
+      - ./app:/capstone/app # optional: live-mount code for instant edits
