@@ -65,7 +65,8 @@ Jimmy Tollett
 
 - Open a terminal in the repo directory.
 
-- Start the container:
+- Start the container.
+- - If you've edited `.env.local`, `docker-compose.yaml`, or `dockerfile`, add the `--build` flag to the end of this command.
 
 ```bash
 docker compose up
