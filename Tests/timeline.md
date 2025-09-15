@@ -38,7 +38,7 @@ timeline
     dateFormat YYYY-MM-DD
     section Sprint 1
         2025-09-19: General Test Structure
-        2025-09-25: Begin Outlining Tests from Service Contracts
+        2025-09-19: Begin Outlining Tests from Service Contracts
         2025-09-22: Service 1 Tests Complete
         2025-09-22: Sprint Complete  
 ```
