@@ -11,6 +11,10 @@ This project is a microservice-based system for parsing and visualizing CAT-21 f
 To ensure reliability and correctness, we plan to implement a hybrid test suite that combines unit tests, integration tests, and end-to-end (E2E) UI tests. A subset of these tests will also serve as health checks in production.
 
 
+## Timeline
+
+A timeline for this Testing Service for the parser and map system is located at [./timeline.md](./timeline.md)
+
 
 ## Testing Strategy
 
