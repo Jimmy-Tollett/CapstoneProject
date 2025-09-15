@@ -88,4 +88,4 @@ docker/
 4.	How to design lightweight health checks that can run periodically in production without overloading the system?
 5.	How to integrate all three layers of testing (unit, integration, E2E) into the CI/CD pipeline? (GitLab CI + Docker)
 6.	How do we handle test data and avoid polluting production databases? (Separate test DB, ephemeral containers, fixtures, etc.)
-7.	How much test coverage is “enough” for FAA standards — should we target specific compliance metrics (e.g., DO-278B/DO-200B)?
+7.	How much test coverage is “enough” for FAA standards - should we target specific compliance metrics (e.g., DO-278B/DO-200B)?
