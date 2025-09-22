@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Air Traffic Control Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <div class="panel-section">
+            <h3>Aircraft Information</h3>
+            <div id="aircraftInfo" class="aircraft-info">
+                <p>Select an aircraft to view details</p>
+            </div>
+        </div>
+        
+        <div class="panel-section">
+            <h3>Filters & Controls</h3>
+            <div class="controls">
+                <label>
+                    <input type="checkbox" id="showPaths" checked>
+                    Show Flight Paths
+                </label>
+                <label>
+                    <input type="range" id="altitudeFilter" min="0" max="50000" value="0">
+                    Min Altitude: <span id="altitudeValue">0</span>ft
+                </label>
+                <button id="refreshData" class="btn-primary">Refresh Data</button>
+            </div>
+        </div>
+        
+        <div class="panel-section">
+            <h3>Statistics</h3>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Aircraft:</span>
+                    <span id="totalAircraft" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Last Update:</span>
+                    <span id="lastUpdate" class="stat-value">Never</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize the ATC system when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof ATCSystem !== 'undefined') {
+            window.atcSystem = new ATCSystem();
+            window.atcSystem.init();
+        }
+    });
+</script>
+{% endblock %}
