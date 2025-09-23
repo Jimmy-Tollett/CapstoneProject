@@ -1,0 +1,59 @@
+# Testing Dependencies for CAT-21 Parser & Mapping System
+# Install with: pip install -r requirements-test.txt
+
+# Core testing framework
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.10.0
+pytest-xdist>=3.0.0  # for parallel test execution
+
+# Code coverage
+pytest-cov>=4.0.0
+coverage>=7.0.0
+
+# HTTP client testing
+requests>=2.28.0
+httpx>=0.24.0  # for async HTTP testing
+
+# Database testing
+pytest-postgresql>=4.1.0
+psycopg2-binary>=2.9.0
+SQLAlchemy>=1.4.0  # if using ORM
+
+# Docker integration testing
+testcontainers>=3.7.0
+docker>=6.0.0
+
+# Performance and load testing
+pytest-benchmark>=4.0.0
+locust>=2.15.0  # for load testing
+
+# Network and UDP testing
+# socket  # standard library
+# time     # standard library
+# threading  # standard library
+
+# Mock and fixtures
+factory-boy>=3.2.0  # for test data generation
+freezegun>=1.2.0   # for time-based testing
+responses>=0.23.0  # for mocking HTTP requests
+
+# Data validation and parsing
+jsonschema>=4.17.0
+pydantic>=1.10.0   # if using for data validation
+
+# Logging and debugging
+# pytest-logging>=2016.11.4  # not available
+
+# Environment and configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0
+
+# Kubernetes testing (if needed)
+kubernetes>=25.0.0
+pytest-kubernetes>=1.1.0
+
+# Additional utilities
+pytest-timeout>=2.1.0
+pytest-html>=3.1.0  # for HTML test reports
+pytest-json-report>=1.5.0

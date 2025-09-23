@@ -1,0 +1,164 @@
+# Docker Compose configuration for testing environment
+# Provides isolated test environment with all services
+
+version: '3.8'
+
+services:
+  # Test Database - PostgreSQL with PostGIS
+  test-database:
+    image: postgis/postgis:14-3.2
+    container_name: test-flight-db
+    environment:
+      POSTGRES_DB: test_flight_data
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - test-db-data:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_flight_data"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test UDP Parser Service
+  test-parser:
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: parser
+    container_name: test-parser
+    environment:
+      - TESTING=true
+      - DATABASE_URL=postgresql://test_user:test_password@test-database:5432/test_flight_data
+      - UDP_PORT=8080
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8081:8080"  # Different port for testing
+    depends_on:
+      test-database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Test API Service
+  test-api:
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: api
+    container_name: test-api
+    environment:
+      - TESTING=true
+      - DATABASE_URL=postgresql://test_user:test_password@test-database:5432/test_flight_data
+      - API_PORT=8000
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8001:8000"  # Different port for testing
+    depends_on:
+      test-database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Test Orchestrator Service
+  test-orchestrator:
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: orchestrator
+    container_name: test-orchestrator
+    environment:
+      - TESTING=true
+      - ORCHESTRATOR_PORT=9000
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "9001:9000"  # Different port for testing
+    depends_on:
+      - test-database
+      - test-parser
+      - test-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Test Frontend Service
+  test-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: test-frontend
+    environment:
+      - NODE_ENV=test
+      - API_BASE_URL=http://test-api:8000
+      - WEBSOCKET_URL=ws://test-api:8000/ws
+    ports:
+      - "3001:3000"  # Different port for testing
+    depends_on:
+      - test-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Test Data Seeder (runs once to populate test data)
+  test-data-seeder:
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: test-seeder
+    container_name: test-data-seeder
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@test-database:5432/test_flight_data
+      - PARSER_UDP_ENDPOINT=test-parser:8080
+    depends_on:
+      test-database:
+        condition: service_healthy
+      test-parser:
+        condition: service_healthy
+    command: ["python", "scripts/seed_test_data.py"]
+    networks:
+      - test-network
+    restart: "no"  # Run once and exit
+
+volumes:
+  test-db-data:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Health check script can be run with:
+# docker-compose -f docker-compose.test.yml ps
+# docker-compose -f docker-compose.test.yml logs [service-name]
+
+# To run integration tests:
+# docker-compose -f docker-compose.test.yml up -d
+# pytest tests/integration/
+# docker-compose -f docker-compose.test.yml down
