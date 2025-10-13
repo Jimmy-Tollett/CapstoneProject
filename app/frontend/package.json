@@ -1,0 +1,58 @@
+{
+  "name": "atc-desktop",
+  "version": "1.0.0",
+  "description": "Air Traffic Control Desktop Application",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:linux": "electron-builder --linux",
+    "build:rpm": "electron-builder --linux rpm",
+    "build:appimage": "electron-builder --linux AppImage"
+  },
+  "keywords": ["air-traffic-control", "atc", "electron", "desktop"],
+  "author": "Andrew Moore",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.atc.desktop",
+    "productName": "ATC System",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "app.py",
+      "requirements.txt",
+      "templates/**/*",
+      "static/**/*",
+      "!venv/**/*",
+      "!dist/**/*",
+      "!node_modules/**/*"
+    ],
+    "linux": {
+      "target": [
+        "rpm",
+        "AppImage"
+      ],
+      "category": "Utility",
+      "executableName": "atc-system"
+    },
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "app",
+        "filter": [
+          "app.py",
+          "requirements.txt",
+          "templates/**/*",
+          "static/**/*"
+        ]
+      }
+    ]
+  }
+}
