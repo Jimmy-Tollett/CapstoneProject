@@ -63,7 +63,37 @@ Jimmy Tollett
 
 ## Dev quickstart
 
+#### With k3d
+
 - Open a terminal in the repo directory.
+
+- If you've not previously set the setup files as executable, do so now:
+
+```bash
+chmod +x orchestrator/cluster_setup.sh
+chmod +x orchestrator/cluster_reload.sh
+chmod +x orchestrator/cluster_delete.sh
+```
+
+- Spin up a cluster. (until we get dev containers set up, this requires you to have k3d installed.)
+
+```bash
+./orchestrator/cluster_setup.sh
+```
+
+- k3d does not natively support hot reload. To load your changes, rebuild the container and update the cluster's image:
+
+```bash
+./orchestrator/cluster_reload.sh
+```
+
+- When you're done, clean up:
+
+```bash
+./orchestrator/cluster_delete.sh
+```
+
+#### With Docker
 
 - Start the container.
 - - If you've edited `.env.local`, `docker-compose.yaml`, or `dockerfile`, add the `--build` flag to the end of this command.

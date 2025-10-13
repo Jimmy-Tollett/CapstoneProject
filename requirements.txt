@@ -1,1 +1,4 @@
-Flask==3.0.3
+Flask==2.3.3
+graphene
+graphene-sqlalchemy
+Flask-GraphQL

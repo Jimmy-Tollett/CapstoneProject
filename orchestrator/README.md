@@ -1,22 +1,30 @@
-# Timeline
+# Service Management & Orchestration
+
+Network czar
+Ports, query structure, enforce standard
+Feed schema to GraphQL
+
+## Timeline
 
 ### PR 1
 
-- [ ] Map out process interdependencies, flow of data
+- [x] Map out process interdependencies, flow of data
 
 - [x] Build Docker scaffold
 
-- [ ] Build k3d scaffold
+- [x] Build k3d scaffold
 
 ### PR 2
 
-- [ ] Set up dev containers
+- [ ] Set up dev containers w/ Docker-in-Docker
 
 - [ ] Add all services into the orchestrator
 
 - [ ] Get minimal connectivity between two services
 
-## PR 3
+- [ ] Set up GraphQL
+
+### PR 3
 
 - [ ] Set up logging & monitoring
 
@@ -24,7 +32,7 @@
 
 - [ ] Add fault tolerance (restart services if they crash, catch bad data, graceful shutdown)
 
-## Project End
+### Project End
 
 - [ ] Smooth out deployment so everything can be spun up on fresh machines
 
