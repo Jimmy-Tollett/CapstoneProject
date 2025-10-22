@@ -1,39 +1,159 @@
+{#
+    Base Template for ATC System
+    This is the parent template that provides common structure for all pages
+
+    Template Inheritance Pattern:
+    - base.html defines the overall structure and blocks
+    - Child templates (index.html) extend this and override specific blocks
+    - This avoids duplicating HTML structure across multiple pages
+
+    Jinja2 Blocks Defined:
+    - title: Page title (appears in browser tab)
+    - extra_css: Additional stylesheets for child templates
+    - content: Main page content (body)
+    - extra_js: Additional scripts for child templates
+
+    Author: Andrew Moore
+    Course: Capstone Project - FAA ATC System
+#}
 <!DOCTYPE html>
+{# HTML5 doctype - tells browser this is modern HTML #}
 <html lang="en">
+{# lang="en" attribute helps screen readers and search engines #}
 <head>
+    {# Character encoding - UTF-8 supports all international characters #}
     <meta charset="UTF-8">
+
+    {#
+        Viewport meta tag for responsive design
+        width=device-width: Match screen width (important for mobile)
+        initial-scale=1.0: Don't zoom in/out by default
+    #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {#
+        Page title - can be overridden by child templates
+        Default: "Air Traffic Control System"
+        Child template can override: {% block title %}Custom Title{% endblock %}
+    #}
     <title>{% block title %}Air Traffic Control System{% endblock %}</title>
-    
-    <!-- Leaflet CSS -->
+
+    <!-- ============================================================
+         CSS Stylesheets
+         Loaded in order: Leaflet CSS, then custom CSS
+         ============================================================ -->
+
+    {#
+        Leaflet.js CSS from CDN (Content Delivery Network)
+        Version 1.9.4 - pinned for stability
+        Provides default styles for map tiles, markers, popups, controls
+    #}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Custom CSS -->
+
+    {#
+        Custom CSS - our dark theme styles
+        url_for() is a Flask function that generates the correct URL
+        Flask knows 'static' folder contains css/style.css
+        Benefits: Works regardless of deployment path, auto cache-busting
+    #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
+    {# Extra CSS block - child templates can inject additional stylesheets #}
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- ============================================================
+         Header - Fixed top bar with logo and status
+         Present on all pages
+         ============================================================ -->
     <header class="header">
         <div class="header-content">
+            {# Application logo/title #}
             <h1 class="logo">ATC System</h1>
+
+            {#
+                Connection Status Indicator
+                - Red pulsing dot when disconnected
+                - Green dot when connected to backend
+                - Status text explains current state
+                JavaScript in app.js updates these elements via updateConnectionStatus()
+            #}
             <div class="status-indicator">
+                {#
+                    Status dot - color controlled by 'connected' class
+                    Default: red (no 'connected' class)
+                    Connected: green (.status-dot.connected in CSS)
+                #}
                 <span class="status-dot" id="connectionStatus"></span>
+
+                {#
+                    Status text - displays current connection state
+                    Default: "Connecting..."
+                    Updated by JavaScript: "Connected", "Connection Failed", etc.
+                #}
                 <span class="status-text" id="statusText">Connecting...</span>
             </div>
         </div>
     </header>
 
+    <!-- ============================================================
+         Main Content Area
+         Child templates inject their content here
+         ============================================================ -->
     <main class="main-content">
+        {#
+            Content block - child templates override this
+            index.html provides the dashboard layout here
+            This is where the sidebar and map container go
+        #}
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Leaflet JS -->
+    <!-- ============================================================
+         JavaScript Files
+         Loaded at end of body for better page load performance
+         ============================================================ -->
+
+    {#
+        Leaflet.js library from CDN
+        Version 1.9.4 - pinned to match CSS version
+        Provides: L.map(), L.marker(), L.tileLayer(), etc.
+        Must load before our app.js which depends on it
+    #}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Custom JS -->
+
+    {#
+        Custom JavaScript - our ATCSystem class
+        url_for() generates correct path to js/app.js
+        Defines window.ATCSystem class used by child templates
+    #}
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    
+
+    {#
+        Extra JavaScript block - child templates can inject additional scripts
+        index.html uses this to initialize: new ATCSystem().init()
+    #}
     {% block extra_js %}{% endblock %}
 </body>
 </html>
+
+{#
+    Why JavaScript at the end of <body>?
+    - Allows HTML to load and render before scripts execute
+    - JavaScript can access DOM elements that are already parsed
+    - Improves perceived page load speed
+    - Modern alternative: <script defer> in <head>, but this is simpler
+
+    Why use url_for()?
+    - Flask generates correct URLs regardless of where app is deployed
+    - Example: /static/css/style.css or /myapp/static/css/style.css
+    - Enables cache busting if configured (adds version hash to filename)
+    - Prevents broken links when moving files
+
+    Template Inheritance Flow:
+    1. Flask route renders index.html
+    2. index.html {% extends "base.html" %}
+    3. Flask loads base.html structure
+    4. index.html blocks override base.html blocks
+    5. Final HTML is sent to browser
+#}
