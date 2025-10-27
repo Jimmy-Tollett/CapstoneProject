@@ -3,6 +3,7 @@ import random
 import time
 import math
 import os
+import requests
 
 app = Flask(__name__)
 
@@ -51,7 +52,25 @@ def get_aircraft():
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return jsonify({"status": "ok", "service": "atc-frontend"})
+
+    ingress_status = data = None
+    try:
+        response = requests.get("http://localhost:8081/")
+        response.raise_for_status()
+        ingress_status = "success"
+        data = response.text
+    except requests.exceptions.RequestException as e:
+        ingress_status = "error"
+        data = str(e)
+
+    return jsonify(
+        {
+            "status": "ok", 
+            "service": "atc-frontend",
+            "ingress_status": ingress_status,
+            "data": data
+        }
+    )
 
 @app.route('/tiles/<int:z>/<int:x>/<int:y>.png')
 def serve_tiles(z, x, y):
