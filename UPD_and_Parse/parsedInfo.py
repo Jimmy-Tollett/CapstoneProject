@@ -1,6 +1,7 @@
 class ParsedInfo:
-    def __init__(self, 
-                 dataSource = "", 
+    def __init__(self, cat = "",
+                 systemAreaCode = "", 
+                 systemIdentificationCode = "",
                  TargetReportDescriptor = "", 
                  TrackNumber = "", 
                  ServiceID = "", 
@@ -43,7 +44,9 @@ class ParsedInfo:
                  DataAges = "", 
                  ReservedExpansionField = "", 
                  SpecialPurposeField = ""):
-        self.dataSource = dataSource
+        self.cat = cat
+        self.systemAreaCode = systemAreaCode
+        self.systemIdentificationCode = systemIdentificationCode
         self.TargetReportDescriptor = TargetReportDescriptor
         self.TrackNumber = TrackNumber
         self.ServiceID = ServiceID
@@ -87,11 +90,21 @@ class ParsedInfo:
         self.DataAges = DataAges
         self.ReservedExpansionField = ReservedExpansionField
         self.SpecialPurposeField = SpecialPurposeField
-    
-def assignDataSource(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.dataSource = "TODO"
+
+
+
+def assignCAT(pushedInfo, assignTo: ParsedInfo):
+    strToAdd = "CAT"
+    strToAdd += str(pushedInfo)
+    assignTo.cat = strToAdd
     return
+def assignDataSource(pushedInfo, assignTo: ParsedInfo, firstOrSecond):
+    # TODO
+    match firstOrSecond:
+        case "first":
+            assignTo.systemAreaCode = pushedInfo
+        case "second":
+            assignTo.systemIdentificationCode = pushedInfo
 
 def assignTargetReportDescriptor(pushedInfo, assignTo: ParsedInfo):
     # TODO
@@ -309,9 +322,239 @@ def assignSpecialPurposeField(pushedInfo, assignTo: ParsedInfo):
     return
 
 
-def parse(pushedInfo: str) -> ParsedInfo:
-    for char in pushedInfo:
-        print(".")
+def parse(pushedInfo: bytes):
+    # TODO: Calculate length of expected byte array
+    # Ask about this
+    # Start case: 
 
-obj = parse("test")
 
+    thisMessage = ParsedInfo()
+
+    byte_array_length = (pushedInfo.bit_length()) // 8
+    byte_array_big_endian = pushedInfo.to_bytes(byte_array_length, 'big')
+    currentState = "Start"
+    print(byte_array_big_endian)
+    stateList = []
+    while(len(byte_array_big_endian) > 0):
+        infoToPush = byte_array_big_endian.pop()
+        print(f"Info: {infoToPush}")
+        match currentState:
+            case "Start":
+                print("CAT Assigned:")
+                assignCAT(infoToPush, thisMessage)
+                print(thisMessage.cat)
+
+                # Deals with length: not needed to be found since python already has libraries that find this information
+                # and we already use this information to build the byte array
+                byte_array_big_endian.pop()
+                # two octets (bytes)
+                byte_array_big_endian.pop()
+                # Next information is the fspec
+                currentState = "First fspec"
+            case "First fspec":
+                # if the info to push modulo 2 == 1, then we set current state to Second fspec after adding things into statelist
+                # if info to push modulo 2 == 0, then we move to the next state in State List
+                # Repeat for fspec up to 7 times
+                print("First fspec")
+                if(infoToPush / 128 == 1):
+                    stateList.append("Data Source Identification")
+                    infoToPush -= 128
+                if(infoToPush / 64 == 1):
+                    stateList.append("Target Report Descriptor START")
+                    infoToPush -= 64
+                if(infoToPush / 32 == 1):
+                    stateList.append("Track Number")
+                    infoToPush -= 32
+                if(infoToPush / 16 == 1):
+                    stateList.append("Service ID")
+                    infoToPush -= 8
+                if(infoToPush / 8 == 1):
+                    stateList.append("Time of Applicability for Position")
+                    infoToPush -= 8
+                if(infoToPush / 4 == 1):
+                    stateList.append("Position in WGS-84 co-ordinates")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Position in WGS-84 coords high res")
+
+
+                # After going through the bytes:
+                if(infoToPush % 2 == 1):
+                    currentState = "Second fspec"
+                else:
+                    currentState = stateList.pop(0)
+            case "Second fspec":
+
+
+                if(infoToPush / 128 == 1):
+                    stateList.append("Time of Applicability for Velocity")
+                    infoToPush -= 128
+                if(infoToPush / 64 == 1):
+                    stateList.append("Air Speed")
+                    infoToPush -= 64
+                if(infoToPush / 32 == 1):
+                    stateList.append("True Air Speed")
+                    infoToPush -= 32
+                if(infoToPush / 16 == 1):
+                    stateList.append("Target Address")
+                    infoToPush -= 8
+                if(infoToPush / 8 == 1):
+                    stateList.append("Time of Message Reception for Position")
+                    infoToPush -= 8
+                if(infoToPush / 4 == 1):
+                    stateList.append("Time of Message Reception for Position High Precision")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Time of Message Reception of Velocity")
+
+
+
+
+                if(infoToPush % 2 == 1):
+                    currentState = "Third fspec"
+                else:
+                    currentState = stateList.pop(0)
+            case "Third fspec":
+                if(infoToPush / 128 == 1):
+                    stateList.append("Time of Message Reception of Velocity High Precision")
+                    infoToPush -= 128
+                if(infoToPush / 64 == 1):
+                    stateList.append("Geometric Height")
+                    infoToPush -= 64
+                if(infoToPush / 32 == 1):
+                    stateList.append("Quality Indicators")
+                    infoToPush -= 32
+                if(infoToPush / 16 == 1):
+                    stateList.append("MOPS version")
+                    infoToPush -= 8
+                if(infoToPush / 8 == 1):
+                    stateList.append("Mode 3A Code")
+                    infoToPush -= 8
+                if(infoToPush / 4 == 1):
+                    stateList.append("Roll Angle")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Flight Level")
+
+
+
+
+                if(infoToPush % 2 == 1):
+                    currentState = "Fourth fspec"
+                else:
+                    currentState = stateList.pop(0)
+
+            case "Fourth fspec":
+                if(infoToPush / 128 == 1):
+                    stateList.append("Magnetic Heading")
+                    infoToPush -= 128
+                if(infoToPush / 64 == 1):
+                    stateList.append("Target Status")
+                    infoToPush -= 64
+                if(infoToPush / 32 == 1):
+                    stateList.append("Barometric Vertical Rate")
+                    infoToPush -= 32
+                if(infoToPush / 16 == 1):
+                    stateList.append("Geometric Vertical Rate")
+                    infoToPush -= 8
+                if(infoToPush / 8 == 1):
+                    stateList.append("Airborne Ground Vector")
+                    infoToPush -= 8
+                if(infoToPush / 4 == 1):
+                    stateList.append("Track Angle Rate")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Time of Report Transmission")
+
+
+
+                if(infoToPush % 2 == 1):
+                    currentState = "Fifth fspec"
+                else:
+                    currentState = stateList.pop(0)
+            
+            case "Fifth fspec":
+                if(infoToPush / 128 == 1):
+                    stateList.append("Target Identification")
+                    infoToPush -= 128
+                if(infoToPush / 64 == 1):
+                    stateList.append("Emitter Category")
+                    infoToPush -= 64
+                if(infoToPush / 32 == 1):
+                    stateList.append("Met Information")
+                    infoToPush -= 32
+                if(infoToPush / 16 == 1):
+                    stateList.append("Selected Altitude")
+                    infoToPush -= 8
+                if(infoToPush / 8 == 1):
+                    stateList.append("Final State Selected Altitude")
+                    infoToPush -= 8
+                if(infoToPush / 4 == 1):
+                    stateList.append("Trajectory Intent")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Service Management")
+
+
+
+                if(infoToPush % 2 == 1):
+                    currentState = "Sixth fspec"
+                else:
+                    currentState = stateList.pop(0)
+            
+            case "Sixth fspec":
+
+                if(infoToPush / 128 == 1):
+                    stateList.append("Aircraft Operational Status")
+                    infoToPush -= 128
+                if(infoToPush / 64 == 1):
+                    stateList.append("Surface Capabilities and Characteristics")
+                    infoToPush -= 64
+                if(infoToPush / 32 == 1):
+                    stateList.append("Message Amplitude")
+                    infoToPush -= 32
+                if(infoToPush / 16 == 1):
+                    stateList.append("BDS Register Data")
+                    infoToPush -= 8
+                if(infoToPush / 8 == 1):
+                    stateList.append("ACAS Resolution Advisory Report")
+                    infoToPush -= 8
+                if(infoToPush / 4 == 1):
+                    stateList.append("Receiver ID")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Data Ages")
+
+
+                if(infoToPush % 2 == 1):
+                    currentState = "Seventh fspec"
+                else:
+                    currentState = stateList.pop(0)
+
+            case "Seventh fspec":
+
+                if(infoToPush / 4 == 1):
+                    stateList.append("Received Expansion Field")
+                    infoToPush -= 4
+                if(infoToPush // 2 == 1):
+                    stateList.append("Special Purpose Field")
+
+                currentState = stateList.pop(0)
+
+            case "Data Source Identification":
+                # 
+                assignDataSource(pushedInfo, thisMessage, "first")
+                pushedInfo = byte_array_big_endian.pop()
+                assignDataSource(pushedInfo, thisMessage, "second")
+
+
+            
+
+
+
+
+
+                
+
+
+parse(0xFF0000FF)
