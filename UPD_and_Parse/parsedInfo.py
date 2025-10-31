@@ -99,10 +99,37 @@ def assignCAT(pushedInfo, assignTo: ParsedInfo):
     assignTo.cat = strToAdd
     return
 def assignDataSource(pushedInfo, assignTo: ParsedInfo, firstOrSecond):
-    # TODO
     match firstOrSecond:
         case "first":
-            assignTo.systemAreaCode = pushedInfo
+            # NOTE: System Area Code refers to the ASTERIX list referred to here: http://www.eurocontrol.int/asterix
+            # Assuming this will always be within the United States/Canada area. If not, then new implementations of this parser should fix this.
+            if(pushedInfo <= 195 or pushedInfo >= 218):
+                assignTo.systemAreaCode = "Reserved for United States"
+            elif(pushedInfo <= 217):
+                match pushedInfo:
+                    case 0xD0:
+                        assignTo.systemAreaCode = "Atlantic Provinces"
+                    case 0xD1:
+                        assignTo.systemAreaCode = "Quebec"
+                    case 0xD2:
+                        assignTo.systemAreaCode = "Ontario"
+                    case 0xD3:
+                        assignTo.systemAreaCode = "Spare"
+                    case 0xD4:
+                        assignTo.systemAreaCode = "Testing/Training Fcilities"
+                    case 0xD5:
+                        assignTo.systemAreaCode = "Central Provinces East"
+                    case 0xD6:
+                        assignTo.systemAreaCode = "Central Provinces West"
+                    case 0xD7:
+                        assignTo.systemAreaCode = "British Columbia Province"
+                    case 0xD8:
+                        assignTo.systemAreaCode = "Nunavut"
+                    case 0xD9:
+                        assignTo.systemAreaCode = "Northern Territory incl. Yukon"
+                    case _:
+                        #If none of the above:
+                        assignTo.systemAreaCode = "Reserved for Canada"
         case "second":
             assignTo.systemIdentificationCode = pushedInfo
 
@@ -360,7 +387,7 @@ def parse(pushedInfo: bytes):
                     stateList.append("Data Source Identification")
                     infoToPush -= 128
                 if(infoToPush / 64 == 1):
-                    stateList.append("Target Report Descriptor START")
+                    stateList.append("Target Report Descripton")
                     infoToPush -= 64
                 if(infoToPush / 32 == 1):
                     stateList.append("Track Number")
@@ -546,6 +573,16 @@ def parse(pushedInfo: bytes):
                 assignDataSource(pushedInfo, thisMessage, "first")
                 pushedInfo = byte_array_big_endian.pop()
                 assignDataSource(pushedInfo, thisMessage, "second")
+                currentState = stateList.pop(0)
+            
+            case "Target Report Descripton":
+                hasValues = True
+                while(hasValues):
+
+
+                    if(pushedInfo % 2 == 1):
+                        # Extension case - hasValues doesn't update, 
+                        print("test")
 
 
             
