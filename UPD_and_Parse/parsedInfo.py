@@ -1,7 +1,16 @@
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+
 class ParsedInfo:
     def __init__(self, cat = "",
                  systemAreaCode = "", 
                  systemIdentificationCode = "",
+                 ATP = "",
+                 ARC = "",
+                 RC = "",
+                 RAB = "",
                  TargetReportDescriptor = "", 
                  TrackNumber = "", 
                  ServiceID = "", 
@@ -48,6 +57,10 @@ class ParsedInfo:
         self.systemAreaCode = systemAreaCode
         self.systemIdentificationCode = systemIdentificationCode
         self.TargetReportDescriptor = TargetReportDescriptor
+        self.ATP = ATP
+        self.ARC = ARC
+        self.RC = RC
+        self.RAB = RAB
         self.TrackNumber = TrackNumber
         self.ServiceID = ServiceID
         self.TimeofApplicabilityForPosition = TimeofApplicabilityForPosition
@@ -91,6 +104,60 @@ class ParsedInfo:
         self.ReservedExpansionField = ReservedExpansionField
         self.SpecialPurposeField = SpecialPurposeField
 
+    def to_dict(self):
+
+        testingString = {"Test1", "Test2"}
+        return {"cat": self.cat,
+        "System area code": self.systemAreaCode,
+        "System Identification Code": self.systemIdentificationCode,
+        "TargetReportDescriptor": self.TargetReportDescriptor,
+        "Address Type": self.ATP,
+        "Altitude Reporting Capability": self.ARC,
+        "Range Check": self.RC,
+        "RAB Report Type": self.RAB,
+        "TrackNumber": self.TrackNumber,
+        "ServiceID": self.ServiceID,
+        "TimeOfApplicabilityForPosition": self.TimeofApplicabilityForPosition,
+        "PosWGS84": self.PosWGS84,
+        "PosWGS84HighRes":self.PosWGS84HighRes,
+        "TimeOfApplicVelocity":self.TimeOfApplicVelocity,
+        "AirSpeed":self.AirSpeed,
+        "TrueAirSpeed": self.TrueAirSpeed,
+        "TargetAddr":self.TargetAddr,
+        "MessageReceptionOfPosTime":self.MessageReceptionOfPosTime,
+        "MessageReceptionOfPosTimeHighPres":self.MessageReceptionOfPosTimeHighPres,
+        "MessageReceptionOfVel":self.MessageReceptionofVel,
+        "MMessageReceptionOfVelHighP":self.TimeMessageReceptionVelHighP,
+        "GeometricHeight":self.GeometricHeight,
+        "QualityIndicators":self.QualityIndicators,
+        "MOPSVers":self.MOPSVers,
+        "Mode3ACode":self.Mode3ACode,
+        "RollAngle":self.RollAngle,
+        "FlightLevel":self.FlightLevel,
+        "MagneticHeading":self.MagneticHeading,
+        "TargetStatus":self.TargetStatus,
+        "BarometricVerticalRate":self.BarometricVerticalRate,
+        "GeometricVerticalRate":self.GeometricVerticalRate,
+        "AirborneGroundVector":self.AirborneGroundVector,
+        "TrackAngleRate":self.TrackAngleRate,
+        "TimeReportTransmission":self.TimeReportTransmission,
+        "TargetIdentification":str(testingString),
+        "EmitterCategory":self.EmitterCategory,
+        "MetInformation":self.MetInformation,
+        "SelectedAltitude":self.SelectedAltitude,
+        "FinalStateSelectedAltitude":self.FinalStateSelectedAltitude,
+        "TrajIntent":self.TrajIntent,
+        "ServManagement":self.ServManagement,
+        "AircraftOpStatus":self.AircraftOpStatus,
+        "SurfaceCapabilitiesAndCharacteristics":self.SurfaceCapabilitiesAndCharacteristics,
+        "MessageAmplitude":self.MessageAmplitude,
+        "BDSRegisterData":self.BDSRegisterData,
+        "ACASResAdvReport":self.ACASResAdvReport,
+        "ReceiverID":self.ReceiverID,
+        "DataAges":self.DataAges,
+        "ReservedExpansionField":self.ReservedExpansionField,
+        "SpecialPurposeField":self.SpecialPurposeField}
+
 
 
 def assignCAT(pushedInfo, assignTo: ParsedInfo):
@@ -133,10 +200,85 @@ def assignDataSource(pushedInfo, assignTo: ParsedInfo, firstOrSecond):
         case "second":
             assignTo.systemIdentificationCode = pushedInfo
 
-def assignTargetReportDescriptor(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.TargetReportDescriptor = "TODO"
+def assignTargetReportDescriptor(pushedInfo, assignTo: ParsedInfo, counter: int):
+    match counter:
+        case 0:
+            # primary extension
+            # bits 8-6: ATP
+            ATP = 0
+            ARC = 0
+            RC = "default"
+            RAB = "Report from Target Transponder"
+            if(pushedInfo // 128 == 1):
+                ATP += 4
+                pushedInfo -= 128
+            if(pushedInfo // 64 == 1):
+                ATP += 2
+                pushedInfo -= 64
+            if(pushedInfo // 32 == 1):
+                ATP += 1
+                pushedInfo -= 32
+            if(pushedInfo // 16 == 1):
+                ARC += 2
+                pushedInfo -= 16
+            if(pushedInfo // 8 == 1):
+                ARC += 1
+                pushedInfo -= 8
+            if(pushedInfo // 4 == 1):
+                RC = "Range Check passed, CPR Validation pending"
+                pushedInfo -= 4
+            if(pushedInfo // 2 == 1):
+                RAB = "Report from Field Monitor"
+            
+            assignTo.RC = RC
+            assignTo.RAB = RAB
+            match ARC:
+                case 0:
+                    ARC = "25 ft"
+                case 1:
+                    ARC = "100 ft"
+                case 2:
+                    ARC = "Unknown"
+                case 3:
+                    ARC = "Invalid"
+            assignTo.ARC = ARC
+            match ATP:
+                case 0:
+                    ATP = "24-Bit ICAO Address"
+                case 1:
+                    ATP = "Duplicate Address"
+                case 2:
+                    ATP = "Surface Vehicle Address"
+                case 3:
+                    ATP = "Anonymous Address"
+                    # what's up fed boy
+                case _:
+                    # TODO: Should ATP become updated, add other cases in here
+                    ATP = "Reserved for Future Use"
+
+                    
+            assignTo.ATP = ATP
+
+            
+            print("Primary")
+        case 1:
+            # TODO
+            print("Extension 1")
+        case 2:
+            # TODO
+            print("Extension 2")
+        case 3:
+            # TODO
+            print("Extension 3")
+        case 4:
+            # TODO
+            print("Extension 4")
+        
+
+
     return
+
+
 
 def assignTrackNumber(pushedInfo, assignTo: ParsedInfo):
     # TODO
@@ -349,21 +491,30 @@ def assignSpecialPurposeField(pushedInfo, assignTo: ParsedInfo):
     return
 
 
-def parse(pushedInfo: bytes):
+def parse(pushedInfo: str):
     # TODO: Calculate length of expected byte array
     # Ask about this
     # Start case: 
 
+    pushedInfo = pushedInfo.split(" ")
+    # Pop method goes from back to front, so for ease of complexity's sake we're reversing the list
+    pushedInfo.reverse()
+
 
     thisMessage = ParsedInfo()
 
-    byte_array_length = (pushedInfo.bit_length()) // 8
-    byte_array_big_endian = pushedInfo.to_bytes(byte_array_length, 'big')
+    print(pushedInfo)
     currentState = "Start"
-    print(byte_array_big_endian)
     stateList = []
-    while(len(byte_array_big_endian) > 0):
-        infoToPush = byte_array_big_endian.pop()
+    while(len(pushedInfo) > 0):
+        infoToPush = pushedInfo.pop()
+        while(len(str(infoToPush)) != 2):
+            # Use the string length in order to determine whether this is actually something we need or not
+            print("Rejected string: ", infoToPush)
+            infoToPush = pushedInfo.pop()
+
+        print('Current infoToPush: ', infoToPush)
+        infoToPush = int(infoToPush, 16)
         print(f"Info: {infoToPush}")
         match currentState:
             case "Start":
@@ -373,9 +524,9 @@ def parse(pushedInfo: bytes):
 
                 # Deals with length: not needed to be found since python already has libraries that find this information
                 # and we already use this information to build the byte array
-                byte_array_big_endian.pop()
+                pushedInfo.pop()
                 # two octets (bytes)
-                byte_array_big_endian.pop()
+                pushedInfo.pop()
                 # Next information is the fspec
                 currentState = "First fspec"
             case "First fspec":
@@ -383,22 +534,22 @@ def parse(pushedInfo: bytes):
                 # if info to push modulo 2 == 0, then we move to the next state in State List
                 # Repeat for fspec up to 7 times
                 print("First fspec")
-                if(infoToPush / 128 == 1):
+                if(infoToPush // 128 == 1):
                     stateList.append("Data Source Identification")
                     infoToPush -= 128
-                if(infoToPush / 64 == 1):
+                if(infoToPush // 64 == 1):
                     stateList.append("Target Report Descripton")
                     infoToPush -= 64
-                if(infoToPush / 32 == 1):
+                if(infoToPush // 32 == 1):
                     stateList.append("Track Number")
                     infoToPush -= 32
-                if(infoToPush / 16 == 1):
+                if(infoToPush // 16 == 1):
                     stateList.append("Service ID")
                     infoToPush -= 8
-                if(infoToPush / 8 == 1):
+                if(infoToPush // 8 == 1):
                     stateList.append("Time of Applicability for Position")
                     infoToPush -= 8
-                if(infoToPush / 4 == 1):
+                if(infoToPush // 4 == 1):
                     stateList.append("Position in WGS-84 co-ordinates")
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
@@ -409,7 +560,7 @@ def parse(pushedInfo: bytes):
                 if(infoToPush % 2 == 1):
                     currentState = "Second fspec"
                 else:
-                    currentState = stateList.pop(0)
+                    currentState = "END FSPEC"
             case "Second fspec":
 
 
@@ -433,14 +584,11 @@ def parse(pushedInfo: bytes):
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
                     stateList.append("Time of Message Reception of Velocity")
-
-
-
-
                 if(infoToPush % 2 == 1):
                     currentState = "Third fspec"
                 else:
-                    currentState = stateList.pop(0)
+                    currentState = "END FSPEC"
+
             case "Third fspec":
                 if(infoToPush / 128 == 1):
                     stateList.append("Time of Message Reception of Velocity High Precision")
@@ -462,14 +610,10 @@ def parse(pushedInfo: bytes):
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
                     stateList.append("Flight Level")
-
-
-
-
                 if(infoToPush % 2 == 1):
                     currentState = "Fourth fspec"
                 else:
-                    currentState = stateList.pop(0)
+                    currentState = "END FSPEC"
 
             case "Fourth fspec":
                 if(infoToPush / 128 == 1):
@@ -492,13 +636,10 @@ def parse(pushedInfo: bytes):
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
                     stateList.append("Time of Report Transmission")
-
-
-
                 if(infoToPush % 2 == 1):
                     currentState = "Fifth fspec"
                 else:
-                    currentState = stateList.pop(0)
+                    currentState = "END FSPEC"
             
             case "Fifth fspec":
                 if(infoToPush / 128 == 1):
@@ -521,13 +662,10 @@ def parse(pushedInfo: bytes):
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
                     stateList.append("Service Management")
-
-
-
                 if(infoToPush % 2 == 1):
                     currentState = "Sixth fspec"
                 else:
-                    currentState = stateList.pop(0)
+                    currentState = "END FSPEC"
             
             case "Sixth fspec":
 
@@ -551,12 +689,10 @@ def parse(pushedInfo: bytes):
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
                     stateList.append("Data Ages")
-
-
                 if(infoToPush % 2 == 1):
                     currentState = "Seventh fspec"
                 else:
-                    currentState = stateList.pop(0)
+                    currentState = "END FSPEC"
 
             case "Seventh fspec":
 
@@ -566,32 +702,71 @@ def parse(pushedInfo: bytes):
                 if(infoToPush // 2 == 1):
                     stateList.append("Special Purpose Field")
 
-                currentState = stateList.pop(0)
+                currentState = "END FSPEC"
+            
+            case "END FSPEC":
+                stateList.reverse()
+                currentState = stateList.pop()
 
             case "Data Source Identification":
                 # 
-                assignDataSource(pushedInfo, thisMessage, "first")
-                pushedInfo = byte_array_big_endian.pop()
-                assignDataSource(pushedInfo, thisMessage, "second")
-                currentState = stateList.pop(0)
+                assignDataSource(infoToPush, thisMessage, "first")
+                infoToPush = pushedInfo.pop()
+                while(len(str(infoToPush)) != 2):
+                    # Use the string length in order to determine whether this is actually something we need or not
+                    infoToPush = pushedInfo.pop()
+                infoToPush = int(infoToPush, 16)
+                
+                assignDataSource(infoToPush, thisMessage, "second")
+                currentState = stateList.pop()
             
             case "Target Report Descripton":
                 hasValues = True
+                counter = 0
                 while(hasValues):
 
 
-                    if(pushedInfo % 2 == 1):
+                    if(infoToPush % 2 == 1):
                         # Extension case - hasValues doesn't update, 
-                        print("test")
-
-
+                        assignTargetReportDescriptor(infoToPush, thisMessage, counter)
+                        counter += 1
+                        infoToPush = pushedInfo.pop()
+                        while(len(str(infoToPush)) != 2):
+                            # Use the string length in order to determine whether this is actually something we need or not
+                            infoToPush = pushedInfo.pop()
+                        infoToPush = int(infoToPush, 16)
+                    else:
+                        currentState = stateList.pop()
+                        assignTargetReportDescriptor(infoToPush, thisMessage, counter)
+                        hasValues = False
             
 
+            case _:
+                print("File completed parsing")
+                break
+
+    return thisMessage
+
+
+
+def sendToDatabase(toPush: ParsedInfo):
+    return jsonify(toPush.to_dict())
 
 
 
 
+
+
+@app.route("/api/aircraft/update")
+def get_data():
+    parsingInfo = "Sample Data 0000   15 00 44 cf 1b 7b 5b c1 81 df 0c 00 01 00 7a e0 0010    62 19 92 6f ba d5 ea 0c c9 37 46 dd 6a f5 38 a7   0020   90 7c 7a e0 63 7a e0 63 17 d4 31 f7 14 12 05 8e   0030   05 9f 40 00 00 08 6d 82 d8 7a e0 63 31 82 b5 e3    0040   78 20 02 02                                       x "
+    parsed = parse(parsingInfo)
+    return jsonify(parsed.to_dict())
                 
 
 
-parse(0xFF0000FF)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+    
