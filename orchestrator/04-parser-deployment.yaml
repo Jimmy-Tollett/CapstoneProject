@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parser-deployment
+  labels:
+    app: parser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: parser
+  template:
+    metadata:
+      labels:
+        app: parser
+    spec:
+      containers:
+      - name: parser-container
+        image: parser-image:latest # **Replace with your Parser Docker image**
+        env:
+        - name: DATABASE_URL # Parser needs to connect to the DB
+          value: "postgresql://user:password123@postgres-svc:5432/mydatabase"
+        # Add any necessary device-specific configurations here (e.g., volume mounts for device access if needed)

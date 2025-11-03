@@ -2,11 +2,11 @@
 
 ### PR 1
 
-- [ ] Map out process interdependencies, flow of data
+- [x] Map out process interdependencies, flow of data
 
 - [x] Build Docker scaffold
 
-- [ ] Build k3d scaffold
+- [x] Build k3d scaffold
 
 ### PR 2
 
@@ -14,7 +14,7 @@
 
 - [ ] Add all services into the orchestrator
 
-- [ ] Get minimal connectivity between two services
+- [x] Get minimal connectivity between two services
 
 ## PR 3
 
@@ -29,3 +29,8 @@
 - [ ] Smooth out deployment so everything can be spun up on fresh machines
 
 - [ ] Produce final system documentation
+
+k3d cluster create --api-port 6550 -p "8081:80@loadbalancer" --agents 2
+kubectl create deployment nginx --image=nginx
+kubectl create service clusterip nginx --tcp=80:80
+kubectl apply -f deployment.yaml -l kind=Ingress
