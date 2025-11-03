@@ -19,15 +19,15 @@ docker build --no-cache -t ${API_IMAGE} .
 k3d image import ${API_IMAGE} -c ${CLUSTER_NAME}
 
 # Parser container
-# cd ../UPD_and_Parse
-# docker build -t ${PARSER_IMAGE} .
-# k3d image import ${PARSER_IMAGE} -c ${CLUSTER_NAME}
+cd ../UPD_and_Parse
+docker build -t ${PARSER_IMAGE} .
+k3d image import ${PARSER_IMAGE} -c ${CLUSTER_NAME}
 
 cd ../orchestrator
 kubectl apply -f 01-database-pvc.yaml
 kubectl apply -f 02-database-deployment.yaml
 kubectl apply -f 03-api-deployment.yaml
-#kubectl apply -f 04-parser-deployment.yaml
+kubectl apply -f 04-parser-deployment.yaml
 
 # Tear down:
 # k3d cluster delete capstone
