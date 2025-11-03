@@ -53,21 +53,21 @@ def get_aircraft():
 def health():
     """Health check endpoint"""
 
-    ingress_status = data = None
+    api_status = data = None
     try:
-        response = requests.get("http://localhost:8081/")
+        response = requests.get("http://localhost:8080/health")
         response.raise_for_status()
-        ingress_status = "success"
+        api_status = "success"
         data = response.text
     except requests.exceptions.RequestException as e:
-        ingress_status = "error"
+        api_status = "error"
         data = str(e)
 
     return jsonify(
         {
             "status": "ok", 
             "service": "atc-frontend",
-            "ingress_status": ingress_status,
+            "api_status": api_status,
             "data": data
         }
     )
