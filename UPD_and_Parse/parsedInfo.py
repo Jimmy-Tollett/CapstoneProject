@@ -11,6 +11,12 @@ class ParsedInfo:
                  ARC = "",
                  RC = "",
                  RAB = "",
+                 DCR = "",
+                 GBS = "",
+                 SIM = "",
+                 TST = "",
+                 SAA = "",
+                 CL = "",
                  TargetReportDescriptor = "", 
                  TrackNumber = "", 
                  ServiceID = "", 
@@ -61,6 +67,12 @@ class ParsedInfo:
         self.ARC = ARC
         self.RC = RC
         self.RAB = RAB
+        self.DCR = DCR,
+        self.GBS = GBS,
+        self.SIM = SIM,
+        self.TST = TST,
+        self.SAA = SAA,
+        self.CL = CL,
         self.TrackNumber = TrackNumber
         self.ServiceID = ServiceID
         self.TimeofApplicabilityForPosition = TimeofApplicabilityForPosition
@@ -115,6 +127,12 @@ class ParsedInfo:
         "Altitude Reporting Capability": self.ARC,
         "Range Check": self.RC,
         "RAB Report Type": self.RAB,
+        "Differential Connection": self.DCR,
+        "Ground Bit Setting": self.GBS,
+        "Simulated Target": self.SIM,
+        "Test Target": self.TST,
+        "Selected Altitude Available": self.SAA,
+        "Confidence Level": self.CL,
         "TrackNumber": self.TrackNumber,
         "ServiceID": self.ServiceID,
         "TimeOfApplicabilityForPosition": self.TimeofApplicabilityForPosition,
@@ -141,7 +159,7 @@ class ParsedInfo:
         "AirborneGroundVector":self.AirborneGroundVector,
         "TrackAngleRate":self.TrackAngleRate,
         "TimeReportTransmission":self.TimeReportTransmission,
-        "TargetIdentification":str(testingString),
+        "TargetIdentification":self.TargetIdentification,
         "EmitterCategory":self.EmitterCategory,
         "MetInformation":self.MetInformation,
         "SelectedAltitude":self.SelectedAltitude,
@@ -251,18 +269,57 @@ def assignTargetReportDescriptor(pushedInfo, assignTo: ParsedInfo, counter: int)
                     ATP = "Surface Vehicle Address"
                 case 3:
                     ATP = "Anonymous Address"
-                    # what's up fed boy
+                    # what's up (secret) fed boy
                 case _:
                     # TODO: Should ATP become updated, add other cases in here
                     ATP = "Reserved for Future Use"
 
-                    
+
             assignTo.ATP = ATP
 
             
             print("Primary")
         case 1:
-            # TODO
+            DCR = "No differential correction"
+            GBS = "Ground Bit not set"
+            SIM = "Actual target report"
+            TST = "Default"
+            SAA = "Equipment capable to provide Selected Altitude"
+            CL = 0
+            if(pushedInfo // 128 == 1):
+                DCR = "Differential Correction"
+                pushedInfo -= 128
+            if(pushedInfo // 64 == 1):
+                GBS = "Ground Bit set"
+                pushedInfo -= 64
+            if(pushedInfo // 32 == 1):
+                SIM = "Simulated target report"
+                pushedInfo -= 32
+            if(pushedInfo // 16 == 1):
+                TST = "Test Target"
+                pushedInfo -= 16
+            if(pushedInfo // 8 == 1):
+                SAA = "Equipment not capable to provide Selected Altitude"
+                pushedInfo -= 8
+            if(pushedInfo // 4 == 1):
+                CL += 2
+                pushedInfo -= 4
+            if(pushedInfo // 2 == 1):
+                CL += 1
+            assignTo.SAA = SAA
+            assignTo.TST = TST
+            assignTo.SIM = SIM
+            assignTo.GBS = GBS
+            assignTo.DCR = DCR
+            match CL:
+                case 0:
+                    assignTo.CL = "Report valid"
+                case 1:
+                    assignTo.CL = "Report suspect"
+                case 2:
+                    assignTo.CL = "No Information"
+                case 3:
+                    assignTo.CL = "Reserved for future use"
             print("Extension 1")
         case 2:
             # TODO
@@ -490,6 +547,11 @@ def assignSpecialPurposeField(pushedInfo, assignTo: ParsedInfo):
     assignTo.SpecialPurposeField = "TODO"
     return
 
+def getNewInfo(pushedInfoList):
+    #TODO - popping new info and returning it, but also error checking beforehand. 
+    # Needs while loop to make sure of str len 2, along with a try/except of translating from string to hex representation of an int
+    return 0
+
 
 def parse(pushedInfo: str):
     # TODO: Calculate length of expected byte array
@@ -560,9 +622,11 @@ def parse(pushedInfo: str):
                 if(infoToPush % 2 == 1):
                     currentState = "Second fspec"
                 else:
-                    currentState = "END FSPEC"
+                    
+                    stateList.reverse()
+                    currentState = stateList.pop()
             case "Second fspec":
-
+                print("Second fspec")
 
                 if(infoToPush / 128 == 1):
                     stateList.append("Time of Applicability for Velocity")
@@ -587,9 +651,12 @@ def parse(pushedInfo: str):
                 if(infoToPush % 2 == 1):
                     currentState = "Third fspec"
                 else:
-                    currentState = "END FSPEC"
+                    
+                    stateList.reverse()
+                    currentState = stateList.pop()
 
             case "Third fspec":
+                print("Third fspec")
                 if(infoToPush / 128 == 1):
                     stateList.append("Time of Message Reception of Velocity High Precision")
                     infoToPush -= 128
@@ -613,9 +680,12 @@ def parse(pushedInfo: str):
                 if(infoToPush % 2 == 1):
                     currentState = "Fourth fspec"
                 else:
-                    currentState = "END FSPEC"
+                    
+                    stateList.reverse()
+                    currentState = stateList.pop()
 
             case "Fourth fspec":
+                print("Fourth fspec")
                 if(infoToPush / 128 == 1):
                     stateList.append("Magnetic Heading")
                     infoToPush -= 128
@@ -639,9 +709,12 @@ def parse(pushedInfo: str):
                 if(infoToPush % 2 == 1):
                     currentState = "Fifth fspec"
                 else:
-                    currentState = "END FSPEC"
+                    
+                    stateList.reverse()
+                    currentState = stateList.pop()
             
             case "Fifth fspec":
+                print("Fifth fspec")
                 if(infoToPush / 128 == 1):
                     stateList.append("Target Identification")
                     infoToPush -= 128
@@ -665,10 +738,12 @@ def parse(pushedInfo: str):
                 if(infoToPush % 2 == 1):
                     currentState = "Sixth fspec"
                 else:
-                    currentState = "END FSPEC"
+                    
+                    stateList.reverse()
+                    currentState = stateList.pop()
             
             case "Sixth fspec":
-
+                print("Sixth fspec")
                 if(infoToPush / 128 == 1):
                     stateList.append("Aircraft Operational Status")
                     infoToPush -= 128
@@ -692,19 +767,18 @@ def parse(pushedInfo: str):
                 if(infoToPush % 2 == 1):
                     currentState = "Seventh fspec"
                 else:
-                    currentState = "END FSPEC"
+                    stateList.reverse()
+                    currentState = stateList.pop()
+
 
             case "Seventh fspec":
-
+                print("Seventh fspec")
                 if(infoToPush / 4 == 1):
                     stateList.append("Received Expansion Field")
                     infoToPush -= 4
                 if(infoToPush // 2 == 1):
                     stateList.append("Special Purpose Field")
 
-                currentState = "END FSPEC"
-            
-            case "END FSPEC":
                 stateList.reverse()
                 currentState = stateList.pop()
 
@@ -735,9 +809,11 @@ def parse(pushedInfo: str):
                             # Use the string length in order to determine whether this is actually something we need or not
                             infoToPush = pushedInfo.pop()
                         infoToPush = int(infoToPush, 16)
+                        print("New Info: ", infoToPush)
                     else:
                         currentState = stateList.pop()
                         assignTargetReportDescriptor(infoToPush, thisMessage, counter)
+                        print("New Info: ", infoToPush)
                         hasValues = False
             
 
