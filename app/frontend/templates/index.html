@@ -1,63 +1,167 @@
+{#
+    Air Traffic Control Dashboard - Main Page Template
+    This is a Jinja2 template that extends base.html
+
+    Jinja2 Syntax:
+    - {% ... %} = Template logic (extends, block, for, if, etc.)
+    - {{ ... }} = Variable output (renders values)
+    - {# ... #} = Comments (not rendered in HTML)
+
+    This template inherits from base.html which provides:
+    - HTML structure (<html>, <head>, <body>)
+    - Header with logo and status indicator
+    - CSS and JavaScript imports (Leaflet, app.js, style.css)
+
+    Author: Andrew Moore
+    Course: Capstone Project - FAA ATC System
+#}
+
+{# Extend the base template (inherit its structure) #}
 {% extends "base.html" %}
 
+{# Override the title block from base.html #}
 {% block title %}Air Traffic Control Dashboard{% endblock %}
 
+{# Main content block - this is where our dashboard UI goes #}
 {% block content %}
 <div class="dashboard">
-    <!-- Control Panel -->
+
+    <!-- ================================================================
+         Control Panel - Left Sidebar
+         Contains aircraft info, filters, and statistics
+         ================================================================ -->
     <div class="control-panel">
+
+        <!-- Aircraft Information Section -->
         <div class="panel-section">
             <h3>Aircraft Information</h3>
+            {#
+                Aircraft info panel - populated by JavaScript when user clicks a marker
+                ID 'aircraftInfo' is targeted by app.js updateAircraftInfoPanel()
+            #}
             <div id="aircraftInfo" class="aircraft-info">
                 <p>Select an aircraft to view details</p>
             </div>
         </div>
-        
+
+        <!-- Filters & Controls Section -->
         <div class="panel-section">
             <h3>Filters & Controls</h3>
             <div class="controls">
+
+                {# Show Flight Paths Checkbox - Currently a placeholder feature #}
                 <label>
                     <input type="checkbox" id="showPaths" checked>
                     Show Flight Paths
+                    {#
+                        Event listener in app.js initControls() responds to changes
+                        'checked' attribute makes it checked by default
+                        Future feature: would display aircraft historical paths
+                    #}
                 </label>
+
+                {#
+                    Altitude Filter Slider
+                    Range input allows filtering aircraft by minimum altitude
+                    min="0" max="50000" = range from 0 to 50,000 feet
+                    value="0" = starts at 0 (show all aircraft)
+                #}
                 <label>
                     <input type="range" id="altitudeFilter" min="0" max="50000" value="0">
                     Min Altitude: <span id="altitudeValue">0</span>ft
+                    {#
+                        altitudeValue span is updated by JavaScript as slider moves
+                        Event listener in app.js calls filterAircraftByAltitude()
+                    #}
                 </label>
+
+                {# Refresh Button - Manually trigger aircraft data reload #}
                 <button id="refreshData" class="btn-primary">Refresh Data</button>
+                {# Click event in app.js calls loadAircraftData() #}
             </div>
         </div>
-        
+
+        <!-- Statistics Section -->
         <div class="panel-section">
             <h3>Statistics</h3>
             <div class="stats">
+                {#
+                    Total Aircraft Counter
+                    Updated by app.js updateStatistics() every time data loads
+                #}
                 <div class="stat-item">
                     <span class="stat-label">Total Aircraft:</span>
                     <span id="totalAircraft" class="stat-value">0</span>
+                    {# Initial value is 0, changes after first data load #}
                 </div>
+
+                {#
+                    Last Update Timestamp
+                    Shows time of most recent data refresh
+                    Updated by app.js updateStatistics() using new Date().toLocaleTimeString()
+                #}
                 <div class="stat-item">
                     <span class="stat-label">Last Update:</span>
                     <span id="lastUpdate" class="stat-value">Never</span>
+                    {# Initial value is "Never", changes after first data load #}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Map Container -->
+    <!-- ================================================================
+         Map Container - Right Side
+         Leaflet.js interactive map displays here
+         ================================================================ -->
     <div class="map-container">
+        {#
+            Map div - Leaflet takes over this element
+            ID 'map' is targeted by app.js: L.map('map')
+            Leaflet renders tiles, markers, and controls inside this div
+        #}
         <div id="map"></div>
     </div>
 </div>
 {% endblock %}
 
+{#
+    Extra JavaScript Block
+    This block is injected into base.html's extra_js section
+    Runs after Leaflet.js and app.js are loaded
+#}
 {% block extra_js %}
 <script>
-    // Initialize the ATC system when page loads
+    /**
+     * Application Initialization Script
+     * Waits for DOM to be ready, then creates and initializes the ATC system
+     */
+
+    // Wait for the DOM to be fully loaded before running JavaScript
+    // DOMContentLoaded fires when HTML is parsed, but before images/styles finish loading
     document.addEventListener('DOMContentLoaded', function() {
+
+        // Check if ATCSystem class is available (loaded from app.js via base.html)
         if (typeof ATCSystem !== 'undefined') {
+
+            // Create a new instance of the ATCSystem class
+            // Store it on window object so it's accessible globally for debugging
             window.atcSystem = new ATCSystem();
+
+            // Initialize the system (sets up map, loads data, starts periodic updates)
+            // This calls the init() method from app.js
             window.atcSystem.init();
+
+        } else {
+            // If ATCSystem isn't defined, app.js didn't load properly
+            console.error('ATCSystem class not found! Check that app.js loaded correctly.');
         }
     });
+
+    /*
+     * Why this pattern?
+     * - DOMContentLoaded ensures all HTML elements exist before JavaScript tries to access them
+     * - typeof check prevents errors if app.js fails to load
+     * - Storing on window object allows console debugging: window.atcSystem.loadAircraftData()
+     */
 </script>
 {% endblock %}
