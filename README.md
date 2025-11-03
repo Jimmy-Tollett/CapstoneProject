@@ -61,28 +61,87 @@ Andrew Moore
 
 Jimmy Tollett
 
-## Dev quickstart
+## Demo Guide
 
-- Open a terminal in the repo directory.
+###### As of PR 2
 
-- Start the container.
-- - If you've edited `.env.local`, `docker-compose.yaml`, or `dockerfile`, add the `--build` flag to the end of this command.
+> #### Spin up the cluster
 
-```bash
-docker compose up
+This contains all of the business logic—namely the parser, database, and API.
+
+- Navigate to `CapstoneProject/orchestrator/`
+- Run `./cluster_setup.sh`
+- Wait for pods to start
+- - Run `kubectl get pods` until all report `READY 1/1` and `STATUS Running`
+
+> #### Start the Electron app
+
+This runs on the host machine, independently of the cluster.
+
+- Navigate to `CapstoneProject/app/frontend/electron/`
+- Run `build_setup.sh`
+
+> #### Health check
+
+##### API
+
+This is the only outward-facing endpoint. It's used by the Electron app to query the database.
+
+- In your browser, navigate to `http://localhost:8080/health`
+
+A healthy response indicates that the API service has successfully connected to the database.
+
+```
+{
+  "database": {
+    "error": null,
+    "resolved_ip": "10.43.45.89",
+  "url": "db:5432"
+  },
+  "status": "ok"
+}
 ```
 
-- If that doesn't work, try:
+##### Parser
 
-```bash
-docker build -t smo-api .
-docker run --rm -it -p 8000:8000 -v "${PWD}/data:/capstone/data" smo-api
+This endpoint exists only within the cluster; it's used to verify that the parser can access the database.
+
+- The parser reports to cluster port 8001. Manually forward the port:
+  `kubectl port-forward pod/parser-deployment-7fc5f7fd64-74j2d 8001:8001`
+
+- In your browser, navigate to `http://localhost:8001/health`
+
+A healthy response indicates that the parser service has successfully connected to the database.
+
+```
+{
+  "database": {
+    "error": null,
+    "resolved_ip": "10.43.45.89",
+    "url": "db:5432"
+  },
+  "status": "ok"
+}
 ```
 
-Open http://localhost:8000 and/or http://localhost:8000/healthz to verify that it's working.
+##### Electron app
 
-- When you're done, tear it down:
+The desktop app exposes this endpoint in order to indicate whether it's able to communicate with the cluster.
 
-```bash
-docker compose down
+- In your browser, navigate to `http://localhost:5001/health`
+
+A healthy response indicates that the Electron app is able to make requests to the API service.
+
 ```
+{
+  "api_status": "success",
+  "data": "{\"database\":{\"error\":null,\"resolved_ip\":\"10.43.45.89\",\"url\":\"db:5432\"},\"status\":\"ok\"}\n",
+  "service": "atc-frontend",
+  "status": "ok"
+}
+```
+
+> #### Tearing down
+
+- To terminate the Electron app, simply close the window.
+- To tear down the cluster, run `k3d cluster delete capstone`
