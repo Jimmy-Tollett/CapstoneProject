@@ -1,7 +1,6 @@
-import os
+import os, socket, psycopg
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import psycopg
 
 
 
@@ -27,11 +26,25 @@ def q(query, params=None, one=False):
 
 @app.get("/health")
 def health():
+    status = {
+        "status": "ok",
+        "database": {
+            "url": DB_URL.split("@")[1].split("/")[0],  # Safe way to show host:port
+            "resolved_ip": None,
+            "error": None
+        }
+    }
+    
     try:
-        r = q("SELECT 1 as ok;", one=True)
-        return {"status": "ok", "db": r["ok"]}
+        # Try to resolve DB hostname
+        db_host = DB_URL.split("@")[1].split(":")[0]
+        status["database"]["resolved_ip"] = socket.gethostbyname(db_host)
     except Exception as e:
-        return {"status": "error", "detail": str(e)}, 500
+        status["database"]["error"] = str(e)
+        return jsonify(status), 503  # Service Unavailable
+    
+    return jsonify(status)
+
 
 @app.get("/api/aircraft")
 def get_aircraft():
