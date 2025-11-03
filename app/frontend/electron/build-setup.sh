@@ -22,7 +22,11 @@ if [ ! -d "venv" ]; then
 fi
 
 echo "Activating virtual environment..."
-source venv/bin/activate
+if [ -d "venv/Scripts" ]; then
+    source venv/Scripts/activate # Appropriate path for Windows
+else
+    source venv/bin/activate # Appropriate path for Mac (barf) and Linux
+fi
 
 echo "Installing Python dependencies..."
 pip install -r requirements.txt

@@ -2,19 +2,19 @@
 
 ### PR 1
 
-- [ ] Map out process interdependencies, flow of data
+- [x] Map out process interdependencies, flow of data
 
 - [x] Build Docker scaffold
 
-- [ ] Build k3d scaffold
+- [x] Build k3d scaffold
 
 ### PR 2
 
 - [ ] Set up dev containers
 
-- [ ] Add all services into the orchestrator
+- [x] Add all services into the orchestrator
 
-- [ ] Get minimal connectivity between two services
+- [x] Get minimal connectivity between two services
 
 ## PR 3
 
