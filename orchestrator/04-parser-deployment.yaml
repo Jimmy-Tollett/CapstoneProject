@@ -5,7 +5,7 @@ metadata:
   labels:
     app: parser
 spec:
-  replicas: 1
+  replicas: 1 # Spin up 1 copy of this pod (can increase in prod)
   selector:
     matchLabels:
       app: parser
@@ -16,11 +16,10 @@ spec:
     spec:
       containers:
       - name: parser-container
-        image: parser-image:latest # **Replace with your Parser Docker image**
+        image: parser-image:latest # Defined in CapstoneProject/UPD_and_Parse/Dockerfile
         imagePullPolicy: Never
         ports:
-        - containerPort: 8001
+        - containerPort: 8001 # The port the parser container exposes internally
         env:
-        - name: DB_URL # Example environment variable for the API to connect to the DB
+        - name: DB_URL # Environment variable giving database address
           value: "postgresql+psycopg://atc:atcpass@db:5432/adsb"
-        # Add any necessary device-specific configurations here (e.g., volume mounts for device access if needed)

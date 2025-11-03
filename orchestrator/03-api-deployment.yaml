@@ -6,7 +6,7 @@ metadata:
   labels:
     app: api
 spec:
-  replicas: 1
+  replicas: 1 # Spin up 1 copy of this pod (can increase in prod)
   selector:
     matchLabels:
       app: api
@@ -17,16 +17,16 @@ spec:
     spec:
       containers:
       - name: api-container
-        image: api-image:latest # **Replace with your API Docker image**
+        image: api-image:latest # Defined in CapstoneProject/backend/Dockerfile
         imagePullPolicy: Never
         ports:
-        - containerPort: 8000 # Assuming your API runs on port 3000
+        - containerPort: 8000 # The port the API container exposes internally
         env:
-        - name: DB_URL # Example environment variable for the API to connect to the DB
+        - name: DB_URL # Environment variable giving database address
           value: "postgresql+psycopg://atc:atcpass@db:5432/adsb"
 
 ---
-# --- API Service (LoadBalancer for external access) ---
+# --- API Service (NodePort for external access) ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -36,7 +36,7 @@ spec:
     app: api
   ports:
     - protocol: TCP
-      port: 80 # The port the LoadBalancer will use
-      targetPort: 8000 # The port the container exposes (e.g., your Node.js/Go API port)
-      nodePort: 30080
-  type: NodePort # k3d maps this to the host port we defined (8080)
+      port: 80
+      targetPort: 8000 # The port the API container exposes internally
+      nodePort: 30080 # The port where the node listens for external requests
+  type: NodePort # Traffic to the cluster's exposed port (8080, defined in cluster_setup.sh) gets redirected here
