@@ -30,10 +30,16 @@ spec:
         volumeMounts:
         - mountPath: /var/lib/postgresql/data
           name: postgres-storage
+        - name: db-schema-volume # Mount the schema for initialization
+          mountPath: /docker-entrypoint-initdb.d/
+          readOnly: true
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
           claimName: postgres-pvc
+      - name: db-schema-volume
+        configMap:
+          name: db-schema # This must match the ConfigMap name created earlier
 
 ---
 # --- Database Service (ClusterIP for internal access) ---
