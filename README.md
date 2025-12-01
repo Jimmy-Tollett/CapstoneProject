@@ -82,7 +82,7 @@ This contains all of the business logic—namely the parser, database, and API.
 This runs on the host machine, independently of the cluster.
 
 - Navigate to `CapstoneProject/app/frontend/electron/`
-- Run `build_setup.sh`
+- Run `build-setup.sh`
 
 > #### Health check
 
