@@ -1,0 +1,23 @@
+Sample Parsing
+
+15: CAT021
+
+00 44: 68 Length of the Message
+
+cf 1b 7b 5b c1 81 00: FSPEC
+cf: 1101 1111 1-7  FRN 1,2,4,5,6,7 are present and it continues
+1b: 0001 1011 8-14 FRN 11,12,14 are present and it continues
+7b: 0111 1011 15-21 FRN 16,17,18,19,21 are present and it continues
+5b: 0101 1011 22-28 FRN 23,25,26,28 are present and it continues
+c1: 1100 0001 29-35 FRN 29,30 are present and it continues
+81: 1000 0001 36-42 FRN 36 is present and it continues
+00: 0000 0000 43-49 No more FRN and FSPEC is ended
+
+FRN1: 
+	df: sac
+	0c: sic
+
+FRN2:
+	00:
+	
+FRN3:

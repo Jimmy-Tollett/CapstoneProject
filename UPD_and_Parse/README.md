@@ -10,3 +10,7 @@ Parser:
 		Here is where I see Kubernetes being more useful? Can use microservice to understand what info to send to the multiple microservices and then send the smaller info to the said microservices
 	Microservices responds with relevant information
 	Saves object as JSON (Or a custom object determined by the larger overall service) and sends to next microservice
+
+Notes on Parser:
+	- Data Source identification assumes that we will only be operating within the United States/Canada. Further work may be done to update this should either the ADS-B come from a non-US/Canada source, or should the ASTERIX SAC library list become updated (http://www.eurocontrol.int/asterix)
+	

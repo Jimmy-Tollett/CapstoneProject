@@ -30,7 +30,7 @@ timeline
         2025-12-10: Sprint Complete
 ```
 
-## Sprint 1
+## Sprint 1 (Ends Sept 26th):
 
 ```mermaid
 timeline
@@ -43,7 +43,7 @@ timeline
         2025-09-22: Sprint Complete  
 ```
 
-## Sprint 2
+## Sprint 2 (Ends October 10th):
 
 ```mermaid
 timeline
@@ -57,7 +57,7 @@ timeline
         2025-10-13: Sprint Complete
 ```
 
-## Sprint 3
+## Sprint 3 (Ends Nov 3):
 
 ```mermaid
 timeline
@@ -70,7 +70,7 @@ timeline
         2025-11-10: Sprint Complete
 ```
 
-## Sprint 4
+## Sprint 4 (Ends Nov 17th):
 
 ```mermaid
 timeline
