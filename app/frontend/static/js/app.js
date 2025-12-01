@@ -14,7 +14,7 @@ class ATCSystem {
         // Configuration
         this.config = {
             refreshRate: 5000, // 5 seconds
-            mapCenter: [32.8998, -97.0403], // DFW Airport
+            mapCenter: [35.4676, -97.5164], // Oklahoma City
             mapZoom: 9,
             maxAircraftAge: 30000 // 30 seconds
         };
