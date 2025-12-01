@@ -476,7 +476,7 @@ def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
             pushedInfo += assignTo.tempVar
 
             pushedInfo = pushedInfo * 180
-            if(pushedInfo > 90):
+            if(pushedInfo > 90): # 90 for latitude
                 pushedInfo = 90 - pushedInfo
             assignTo.PosWGS84Latitude = pushedInfo
             assignTo.tempVar = 0
@@ -487,12 +487,12 @@ def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
             pushedInfo = pushedInfo / (2 ** 15)
             assignTo.tempVar += pushedInfo
         case 5:
-            pushedInfo = pushedInfo / (2 ** 23)
+            pushedInfo = pushedInfo / (2 ** 23) 
             pushedInfo += assignTo.tempVar
 
             pushedInfo = pushedInfo * 180
-            if(pushedInfo > 90):
-                pushedInfo = 90 - pushedInfo
+            if(pushedInfo > 180): # 180 for longitude
+                pushedInfo = 180 - pushedInfo
             assignTo.PosWGS84Longitude = pushedInfo
 
 
@@ -509,7 +509,7 @@ def assignPosWGS84HighRes(pushedInfo, assignTo: ParsedInfo, i):
         case 2:
             pushedInfo = pushedInfo / (2 ** 22)
         case 3:
-            pushedInfo = pushedInfo / (2 ** 30)
+            pushedInfo = pushedInfo / (2 ** 30) # Check math - First check if number is greater than accepted value, then 
     # TODO
     assignTo.posWGS84HighRes = "TODO"
     return
