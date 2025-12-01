@@ -491,7 +491,7 @@ def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
             pushedInfo += assignTo.tempVar
 
             pushedInfo = pushedInfo * 180
-            if(pushedInfo > 180): # 180 for longitude
+            if(pushedInfo > 180): # 180 for longitude - math may need to be double checked
                 pushedInfo = 180 - pushedInfo
             assignTo.PosWGS84Longitude = pushedInfo
 
