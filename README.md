@@ -51,7 +51,7 @@ Group members are actively researching and aligning on the following:
 
 ### Team Members
 
-Mathew Agron
+Matthew Agron
 
 Jason Huang
 
@@ -74,7 +74,8 @@ This contains all of the business logic—namely the parser, database, and API.
 - Wait for pods to start
 - - Run `kubectl get pods` until all report `READY 1/1` and `STATUS Running`
 - - If kubectl times out, switch to the default kubernetes context
-- - Then delete the stale capstone context: `kubectl config delete-context k3d-capstone`
+- - Delete the stale capstone context: `kubectl config delete-context k3d-capstone`
+- - Then run setup again
 
 > #### Start the Electron app
 
