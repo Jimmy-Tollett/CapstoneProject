@@ -6,10 +6,13 @@ import random
 API_URL = "http://localhost:8000/api/aircraft/update"
 
 # ✈️ Dummy aircraft data (around Oklahoma City area)
+# ✈️ Dummy aircraft data (around Oklahoma City area)
 planes = [
     {
         "icao_addr": "GHJ120",
         "callsign": "ROCKET1",
+        "lat": 35.52,
+        "lon": -97.45,
         "lat": 35.52,
         "lon": -97.45,
         "altitude": 28000,
@@ -21,6 +24,8 @@ planes = [
         "callsign": "ZENIT18",
         "lat": 35.38,
         "lon": -97.60,
+        "lat": 35.38,
+        "lon": -97.60,
         "altitude": 26000,
         "ground_speed": 275,
         "heading": 175
@@ -28,6 +33,8 @@ planes = [
     {
         "icao_addr": "VWX222",
         "callsign": "SPIRIT3",
+        "lat": 35.55,
+        "lon": -97.35,
         "lat": 35.55,
         "lon": -97.35,
         "altitude": 36000,
