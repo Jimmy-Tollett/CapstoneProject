@@ -20,8 +20,8 @@ class ParsedInfo:
                  TargetReportDescriptor = "", 
                  TrackNumber = "", 
                  ServiceID = "", 
-                 TimeofApplicabilityForPosition = "", 
-                 PosWGS84 = "", PosWGS84HighRes = "", 
+                 TimeofApplicabilityForPosition = 0,
+                 PosWGS84HighRes = "", 
                  TimeOfApplicVelocity = "", 
                  AirSpeed = "", 
                  TrueAirSpeed = "", 
@@ -89,8 +89,10 @@ class ParsedInfo:
         self.TrackNumber = TrackNumber
         self.ServiceID = ServiceID
         self.TimeofApplicabilityForPosition = TimeofApplicabilityForPosition
-        self.PosWGS84 = PosWGS84
-        self.PosWGS84HighRes = PosWGS84HighRes
+        self.PosWGS84Latitude = 0
+        self.PosWGS84Longitude = 0
+        self.PosWGS84HighResLat = 0
+        self.PosWGS84HighResLong = 0
         self.TimeOfApplicVelocity = TimeOfApplicVelocity
         self.AirSpeed = AirSpeed
         self.TrueAirSpeed = TrueAirSpeed
@@ -161,8 +163,10 @@ class ParsedInfo:
         "TrackNumber": self.TrackNumber,
         "ServiceID": self.ServiceID,
         "TimeOfApplicabilityForPosition": self.TimeofApplicabilityForPosition,
-        "PosWGS84": self.PosWGS84,
-        "PosWGS84HighRes":self.PosWGS84HighRes,
+        "PosWGS84Lat": self.PosWGS84Latitude,
+        "PosWGS84Long": self.PosWGS84Longitude,
+        "PosWGS84HighResLat": self.PosWGS84HighResLat,
+        "PosWGS84HighResLong": self.PosWGS84HighResLong,
         "TimeOfApplicVelocity":self.TimeOfApplicVelocity,
         "AirSpeed":self.AirSpeed,
         "TrueAirSpeed": self.TrueAirSpeed,
@@ -440,19 +444,72 @@ def assignServiceID(pushedInfo, assignTo: ParsedInfo):
     assignTo.ServiceID = "TODO"
     return
 
-def assignTimeOfApplicabilityForPosition(pushedInfo, assignTo: ParsedInfo, i):
+def assignTimeOfApplicabilityForPosition(pushedInfo: int, assignTo: ParsedInfo, i):
 
-    
-    # TODO
-    assignTo.TimeofApplicabilityForPosition = "TODO"
+    match i:
+        case 0:
+            pushedInfo = pushedInfo * (2 ** 8)
+            assignTo.TimeofApplicabilityForPosition = float(pushedInfo)
+            print("Time check", type(assignTo.TimeofApplicabilityForPosition))
+        case 1:
+            print("type check", type(assignTo.TimeofApplicabilityForPosition))
+            currentTime = float(assignTo.TimeofApplicabilityForPosition)
+            currentTime += float(pushedInfo)
+            assignTo.TimeofApplicabilityForPosition = currentTime
+            print("Time check", assignTo.TimeofApplicabilityForPosition)
+        case 2:
+            pushedInfo = pushedInfo / 128
+            assignTo.TimeofApplicabilityForPosition += pushedInfo
+            print("Time check", assignTo.TimeofApplicabilityForPosition)
     return
 
-def assignPosWGS84(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.PosWGS84 = "TODO"
+def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            pushedInfo = pushedInfo / (2 ** 7)
+            assignTo.tempVar = pushedInfo
+        case 1:
+            pushedInfo = pushedInfo / (2 ** 15)
+            assignTo.tempVar += pushedInfo
+        case 2:
+            pushedInfo = pushedInfo / (2 ** 23)
+            pushedInfo += assignTo.tempVar
+
+            pushedInfo = pushedInfo * 180
+            if(pushedInfo > 90):
+                pushedInfo = 90 - pushedInfo
+            assignTo.PosWGS84Latitude = pushedInfo
+            assignTo.tempVar = 0
+        case 3:
+            pushedInfo = pushedInfo / (2 ** 7)
+            assignTo.tempVar = pushedInfo
+        case 4:
+            pushedInfo = pushedInfo / (2 ** 15)
+            assignTo.tempVar += pushedInfo
+        case 5:
+            pushedInfo = pushedInfo / (2 ** 23)
+            pushedInfo += assignTo.tempVar
+
+            pushedInfo = pushedInfo * 180
+            if(pushedInfo > 90):
+                pushedInfo = 90 - pushedInfo
+            assignTo.PosWGS84Longitude = pushedInfo
+
+
     return
 
-def assignPosWGS84HighRes(pushedInfo, assignTo: ParsedInfo):
+def assignPosWGS84HighRes(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            #a
+            pushedInfo = pushedInfo / (2 ** 6)
+        case 1:
+            pushedInfo = pushedInfo / (2 ** 14)
+
+        case 2:
+            pushedInfo = pushedInfo / (2 ** 22)
+        case 3:
+            pushedInfo = pushedInfo / (2 ** 30)
     # TODO
     assignTo.posWGS84HighRes = "TODO"
     return
@@ -1069,7 +1126,11 @@ def parse(pushedInfo: str):
             # Vehicle Type/ground vehicle? (Emitter Category X)
             # 
             # 
-
+            case "Time of Applicability for Position":
+                for i in range(0, 3):
+                    assignTimeOfApplicabilityForPosition(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
             case "Target Report Descripton":
                 hasValues = True
                 counter = 0
@@ -1096,7 +1157,14 @@ def parse(pushedInfo: str):
                         assignTargetReportDescriptor(infoToPush, thisMessage, counter)
                         print("New Info: ", infoToPush)
                         hasValues = False
-            
+            case "Position in WGS-84 co-ordinates":
+                for i in range(0, 6):
+                    #do this
+                    assignPosWGS84(infoToPush, thisMessage, i)
+                    #newInfo
+                    infoToPush = getNewInfo(pushedInfo)
+
+                currentState = stateList.pop()
             case "Geometric Height":
                 counter = 0
                 assignGeometricHeight(infoToPush, thisMessage, counter)
