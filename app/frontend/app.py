@@ -46,8 +46,30 @@ def index():
 
 @app.route('/api/aircraft')
 def get_aircraft():
-    """API endpoint to get current aircraft data"""
-    return jsonify(generate_mock_aircraft())
+    """API endpoint to get current aircraft data from backend"""
+    try:
+        response = requests.get("http://localhost:8080/api/aircraft")
+        response.raise_for_status()
+
+        # Transform backend field names to frontend format
+        aircraft = []
+        for i, plane in enumerate(response.json()):
+            aircraft.append({
+                "id": i + 1,
+                "callsign": plane.get("callsign") or plane.get("icao_addr"),
+                "latitude": plane["lat"],
+                "longitude": plane["lon"],
+                "altitude": plane.get("altitude") or 0,
+                "speed": plane.get("ground_speed") or 0,
+                "heading": plane.get("heading") or 0,
+                "aircraft_type": "Unknown",
+                "timestamp": int(time.time())
+            })
+        return jsonify(aircraft)
+    except requests.exceptions.RequestException as e:
+        # Fallback to mock data if backend is unavailable
+        print(f"Backend unavailable: {e}, using mock data")
+        return jsonify(generate_mock_aircraft())
 
 @app.route('/health')
 def health():
