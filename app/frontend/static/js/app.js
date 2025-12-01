@@ -54,10 +54,27 @@ class ATCSystem {
         this.map = L.map('map').setView(this.config.mapCenter, this.config.mapZoom);
 
         // Add tile layer (dark theme for ATC)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Try local tiles first, fallback to online if not available
+        const tileLayer = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors, © CARTO',
-            maxZoom: 19
-        }).addTo(this.map);
+            maxZoom: 19,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+        });
+
+        // Fallback to online tiles if local tiles fail
+        tileLayer.on('tileerror', () => {
+            console.warn('Local tile not found, using online tiles');
+            if (!this.onlineTileLayerAdded) {
+                this.map.removeLayer(tileLayer);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap contributors, © CARTO',
+                    maxZoom: 19
+                }).addTo(this.map);
+                this.onlineTileLayerAdded = true;
+            }
+        });
+
+        tileLayer.addTo(this.map);
 
         // Add map event listeners
         this.map.on('click', () => {

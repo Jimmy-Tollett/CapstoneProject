@@ -1,9 +1,14 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 import random
 import time
 import math
+import os
+import requests
 
 app = Flask(__name__)
+
+# Path for offline map tiles
+TILES_DIR = os.path.join(os.path.dirname(__file__), 'tiles')
 
 # Mock aircraft data for development
 def generate_mock_aircraft():
@@ -47,7 +52,36 @@ def get_aircraft():
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return jsonify({"status": "ok", "service": "atc-frontend"})
+
+    api_status = data = None
+    try:
+        response = requests.get("http://localhost:8080/health")
+        response.raise_for_status()
+        api_status = "success"
+        data = response.text
+    except requests.exceptions.RequestException as e:
+        api_status = "error"
+        data = str(e)
+
+    return jsonify(
+        {
+            "status": "ok", 
+            "service": "atc-frontend",
+            "api_status": api_status,
+            "data": data
+        }
+    )
+
+@app.route('/tiles/<int:z>/<int:x>/<int:y>.png')
+def serve_tiles(z, x, y):
+    """Serve map tiles from local directory"""
+    try:
+        tile_path = os.path.join(TILES_DIR, str(z), str(x))
+        return send_from_directory(tile_path, f'{y}.png')
+    except Exception as e:
+        # Return 404 if tile not found - frontend will fallback to online
+        print(f"Tile not found: {z}/{x}/{y}.png - {e}")
+        return '', 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

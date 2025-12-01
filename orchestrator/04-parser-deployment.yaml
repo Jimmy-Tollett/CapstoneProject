@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parser-deployment
+  labels:
+    app: parser
+spec:
+  replicas: 1 # Spin up 1 copy of this pod (can increase in prod)
+  selector:
+    matchLabels:
+      app: parser
+  template:
+    metadata:
+      labels:
+        app: parser
+    spec:
+      containers:
+      - name: parser-container
+        image: parser-image:latest # Defined in CapstoneProject/UPD_and_Parse/Dockerfile
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8001 # The port the parser container exposes internally
+        env:
+        - name: DB_URL # Environment variable giving database address
+          value: "postgresql+psycopg://atc:atcpass@db:5432/adsb"

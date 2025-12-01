@@ -1,0 +1,51 @@
+# --- Database Deployment ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deployment
+  labels:
+    app: db
+spec:
+  replicas: 1 # Spin up 1 copy of this pod (can increase in prod)
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16 # Use a recent, stable PostgreSQL image
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB # Placeholder credentials used in CapstoneProject/backend/app.py
+          value: "adsb"
+        - name: POSTGRES_USER
+          value: "atc"
+        - name: POSTGRES_PASSWORD
+          value: "atcpass"
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+# --- Database Service (ClusterIP for internal access) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+spec:
+  selector:
+    app: db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP # Only accessible from within the k3d cluster
