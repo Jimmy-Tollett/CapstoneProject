@@ -21,7 +21,6 @@ class ParsedInfo:
                  TrackNumber = "", 
                  ServiceID = "", 
                  TimeofApplicabilityForPosition = 0,
-                 PosWGS84HighRes = "", 
                  TimeOfApplicVelocity = "", 
                  AirSpeed = "", 
                  TrueAirSpeed = "", 
@@ -141,16 +140,65 @@ class ParsedInfo:
         self.TBC_Val = TBC_Val
         self.MBC_EP = MBC_EP
         self.MBC_Val = MBC_Val
+        self.NUCr = ""
+        self.NUCp = ""
+        self.NICbaro = ""
+        self.SIL = ""
+        self.NACp = ""
+        self.SILS = ""
+        self.SDA = ""
+        self.GVA = ""
+        self.PIC = ""
+        self.VAL_STATE_EP = ""
+        self.VAL_STATE_Val = ""
+        self.VAL_DIST = 0
+        self.VD = ""
+        self.VQ = ""
+        self.VAL_DIST_QUAL = 0
         self.tempVar = 0
+        self.tempVar2 = 0
+        self.tempVar3 = 0
+        self.VNS = ""
+        self.VN = ""
+        self.LTT = ""
+        self.USE_NEGATIVE_FORM_WGS84 = True
+        self.ICF = ""
+        self.LNAV = ""
+        self.ME = ""
+        self.PS = ""
+        self.SS = ""
 
     def to_dict(self):
 
         testingString = {"Test1", "Test2"}
-        return {"cat": self.cat,
+        return {"Cat": self.cat,
+        "Intent Change flag": self.ICF,
+        "LNAV Mode": self.LNAV,
+        "Military Emergency": self.ME,
+        "Priority Status": self.PS,
+        "Surveillance Status": self.SS,
         "System area code": self.systemAreaCode,
+        "Version Support": self.VNS,
+        "Version Number": self.VN,
+        "Link Technology Type": self.LTT,
         "System Identification Code": self.systemIdentificationCode,
         "TargetReportDescriptor": self.TargetReportDescriptor,
         "Address Type": self.ATP,
+        "Position Integrity Category": self.PIC,
+        "Validation Distance Availability": self.VD,
+        "Validation Distance Quality": self.VQ,
+        "SIL-Supplement": self.SILS,
+        "Position Validation Distance": self.VAL_DIST,
+        "Position Validation Distance Quality": self.VAL_DIST_QUAL,
+        "Position Validation State Element Populated": self.VAL_STATE_EP,
+        "VAL_STATE Value": self.VAL_STATE_Val,
+        "Horizontal Position System Design Assurance Level": self.SDA,
+        "Geometric Altitude Accurace": self.GVA,
+        "Navigation Uncertainty Category for Velocity": self.NUCr,
+        "Navigation Integrity Category": self.NUCp,
+        "Navigation Accuracy Category for Position": self.NACp,
+        "Navigation Integrity Category for Barometric Altitude": self.NICbaro,
+        "Source Integrity Level": self.SIL,
         "Altitude Reporting Capability": self.ARC,
         "Range Check": self.RC,
         "RAB Report Type": self.RAB,
@@ -450,50 +498,74 @@ def assignTimeOfApplicabilityForPosition(pushedInfo: int, assignTo: ParsedInfo, 
         case 0:
             pushedInfo = pushedInfo * (2 ** 8)
             assignTo.TimeofApplicabilityForPosition = float(pushedInfo)
-            print("Time check", type(assignTo.TimeofApplicabilityForPosition))
+            print("Time check 1", type(assignTo.TimeofApplicabilityForPosition))
         case 1:
             print("type check", type(assignTo.TimeofApplicabilityForPosition))
             currentTime = float(assignTo.TimeofApplicabilityForPosition)
             currentTime += float(pushedInfo)
             assignTo.TimeofApplicabilityForPosition = currentTime
-            print("Time check", assignTo.TimeofApplicabilityForPosition)
+            print("Time check 2", assignTo.TimeofApplicabilityForPosition)
         case 2:
             pushedInfo = pushedInfo / 128
             assignTo.TimeofApplicabilityForPosition += pushedInfo
-            print("Time check", assignTo.TimeofApplicabilityForPosition)
+            print("Time check 3", assignTo.TimeofApplicabilityForPosition)
     return
 
 def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
     match i:
         case 0:
-            pushedInfo = pushedInfo / (2 ** 7)
+            print("Lattitude most significant int: ", pushedInfo)
             assignTo.tempVar = pushedInfo
         case 1:
-            pushedInfo = pushedInfo / (2 ** 15)
-            assignTo.tempVar += pushedInfo
+            print("Lattitude int 2: ", pushedInfo)
+            assignTo.tempVar2 = pushedInfo
         case 2:
-            pushedInfo = pushedInfo / (2 ** 23)
-            pushedInfo += assignTo.tempVar
+            
+            print("Lattitude int 3: ", pushedInfo)
 
-            pushedInfo = pushedInfo * 180
-            if(pushedInfo > 90): # 90 for latitude
-                pushedInfo = 90 - pushedInfo
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+            middle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
             assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
             assignTo.tempVar = 0
         case 3:
-            pushedInfo = pushedInfo / (2 ** 7)
+            print("Longitude most significant int: ", pushedInfo)
             assignTo.tempVar = pushedInfo
         case 4:
-            pushedInfo = pushedInfo / (2 ** 15)
-            assignTo.tempVar += pushedInfo
+            print("Longitude int 2: ", pushedInfo)
+            assignTo.tempVar2 = pushedInfo
         case 5:
-            pushedInfo = pushedInfo / (2 ** 23) 
-            pushedInfo += assignTo.tempVar
+            print("Longitude int 3: ", pushedInfo)
 
-            pushedInfo = pushedInfo * 180
-            if(pushedInfo > 180): # 180 for longitude - math may need to be double checked
-                pushedInfo = 180 - pushedInfo
-            assignTo.PosWGS84Longitude = pushedInfo
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+            middle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
 
 
     return
@@ -501,18 +573,84 @@ def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
 def assignPosWGS84HighRes(pushedInfo, assignTo: ParsedInfo, i):
     match i:
         case 0:
-            #a
-            pushedInfo = pushedInfo / (2 ** 6)
+            print("Lattitude most significant int: ", pushedInfo)
+            assignTo.tempVar = pushedInfo
         case 1:
-            pushedInfo = pushedInfo / (2 ** 14)
-
+            print("Lattitude int 2: ", pushedInfo)
+            assignTo.tempVar2 = pushedInfo
         case 2:
-            pushedInfo = pushedInfo / (2 ** 22)
+            
+            print("Lattitude int 3: ", pushedInfo)
+            assignTo.tempVar3 = pushedInfo
+
+            
         case 3:
-            pushedInfo = pushedInfo / (2 ** 30) # Check math - First check if number is greater than accepted value, then 
-    # TODO
-    assignTo.posWGS84HighRes = "TODO"
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+
+            print("Lattitude int 4: ", pushedInfo)
+
+            frontback8 = assignTo.tempVar3
+            assignTo.tempVar3 = 0 
+
+
+
+            frontmiddle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
+        case 4:
+            print("Longitude int 1: ", pushedInfo)
+            assignTo.tempVar = pushedInfo
+        case 5:
+            print("Longitude int 2: ", pushedInfo)
+
+            assignTo.tempVar2 = pushedInfo
+        case 6:
+            print("Longitude int 3: ", pushedInfo)
+            assignTo.tempVar3 = pushedInfo
+        
+        case 7:
+            print("Longitude int 4: ", pushedInfo)
+
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+
+            frontback8 = assignTo.tempVar3
+            assignTo.tempVar3 = 0 
+
+
+
+            frontmiddle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
+
+
     return
+
 
 def assignTimeOfApplicVelocity(pushedInfo, assignTo: ParsedInfo):
     # TODO
@@ -529,14 +667,29 @@ def assignTrueAirSpeed(pushedInfo, assignTo: ParsedInfo):
     assignTo.TrueAirSpeed = "TODO"
     return
 
-def assignTargetAddr(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.TargetAddr = "TODO"
+def assignTargetAddr(pushedInfo, assignTo: ParsedInfo, i):
+
+    match i:
+        case 0:
+            pushedInfo = pushedInfo * 256 * 256
+            assignTo.TargetAddr = pushedInfo
+        case 1:
+            pushedInfo = pushedInfo * 256
+            assignTo.TargetAddr += pushedInfo
+        case 2:
+            assignTo.TargetAddr += pushedInfo
+
+
     return
 
-def assignMessageReceptionOfPosTime(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.MessageReceptionOfPosTime = "TODO"
+def assignMessageReceptionOfPosTime(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.MessageReceptionOfPosTime = pushedInfo * (2 ** 10)
+        case 1:
+            assignTo.MessageReceptionOfPosTime += pushedInfo * 2
+        case 2:
+            assignTo.MessageReceptionOfPosTime += pushedInfo * (2 ** -7)
     return
 
 def assignMessageReceptionOfPosTimeHighPres(pushedInfo, assignTo: ParsedInfo):
@@ -544,9 +697,15 @@ def assignMessageReceptionOfPosTimeHighPres(pushedInfo, assignTo: ParsedInfo):
     assignTo.MessageReceptionOfPosTimeHighPres = "TODO"
     return
 
-def assignMessageReceptionofVel(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.MessageReceptionofVel = "TODO"
+def assignMessageReceptionofVel(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.MessageReceptionofVel = pushedInfo * (2 ** 10)
+        case 1:
+            assignTo.MessageReceptionofVel += pushedInfo * 2
+        case 2:
+            assignTo.MessageReceptionofVel += pushedInfo * (2 ** -7)
+    return
     return
 
 def assignTimeMessageReceptionVelHighP(pushedInfo, assignTo: ParsedInfo):
@@ -562,19 +721,148 @@ def assignGeometricHeight(pushedInfo, assignTo: ParsedInfo, counter):
             assignTo.GeometricHeight += pushedInfo
     return
 
-def assignQualityIndicators(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.GeometricHeight = "TODO"
+def assignQualityIndicators(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            # First primary subfield
+
+
+            # There is a faster way to calc NUCr that takes up less lines
+            # This is the readable form - bit-by-bit
+
+            #if(pushedInfo // 128 == 1):
+            #    assignTo.NUCr += 4
+            #    pushedInfo -= 128
+            #if(pushedInfo // 64 == 1):
+            #    assignTo.NUCr += 2
+            #    pushedInfo -= 64
+            #if(pushedInfo // 32 == 1):
+            #    assignTo.NUCr += 1
+
+            # Here is the faster way to do so:
+            assignTo.NUCr = pushedInfo // 32
+            pushedInfo -= assignTo.NUCr * 32
+
+            assignTo.NUCp = pushedInfo // 2
+            pushedInfo -= assignTo.NUCp * 2
+        case 1:
+            assignTo.NICbaro = pushedInfo // 128
+            pushedInfo -= assignTo.NICbaro * 128
+
+            assignTo.SIL = pushedInfo // 32
+            pushedInfo -= assignTo.SIL * 32
+
+            assignTo.NACp = pushedInfo // 2
+            pushedInfo -= assignTo.NACp * 2
+        case 2:
+            if(pushedInfo // 32 == 1):
+                assignTo.SILS = "Measured per flight-hour"
+                pushedInfo -= 32
+            else:
+                assignTo.SILS = "Measured per sample"
+            
+            assignTo.SDA = pushedInfo // 8
+            pushedInfo -= assignTo.SDA * 8
+
+            assignTo.GVA = pushedInfo // 2
+            pushedInfo -= assignTo.GVA * 2
+        case 3:
+            # Don't understand what the PIC stuff is asking, storing values, 
+            # not super important for the project, can be done later TODO
+            assignTo.PIC = pushedInfo // 16
+            pushedInfo -= assignTo.PIC * 16
+
+            assignTo.SRC = pushedInfo // 8
+        case 4:
+            assignTo.VAL_STATE_EP = pushedInfo // 32
+            pushedInfo -= assignTo.VAL_STATE_EP * 32
+
+            if(pushedInfo // 8 == 0):
+                assignTo.VAL_STATE_Val = "Validation not performed"
+            elif (pushedInfo // 8 == 1):
+                assignTo.VAL_STATE_Val = "Validation performed without pass/fail"
+                pushedInfo -= 8
+            elif (pushedInfo // 8 == 2):
+                assignTo.VAL_STATE_Val = "Validation pass"
+                pushedInfo -= 16
+            elif (pushedInfo // 8 == 3): 
+                assignTo.VAL_STATE_Val = "Validation fail"
+                pushedInfo -= 24
+            
+            assignTo.VD = pushedInfo // 4
+            pushedInfo -= assignTo.VD * 4
+
+            assignTo.VQ = pushedInfo // 2
+            pushedInfo -= assignTo.VQ * 2
+        case 5:
+            # multiply by 128 and set num to this
+            pushedInfo = pushedInfo // 2
+            pushedInfo = pushedInfo * 128
+            assignTo.VAL_DIST = pushedInfo
+        case 6:
+            assignTo.VAL_DIST += (pushedInfo // 2)
+        case 7:
+            pushedInfo = pushedInfo // 2
+            pushedInfo = pushedInfo * 128
+            assignTo.VAL_DIST_QUAL = pushedInfo
+        case 8:
+            assignTo.VAL_DIST_QUAL += (pushedInfo // 2)
+
+
+
+        
+            
+
+
+            
+
+
+
     return
 
 def assignMOPSVers(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.MOPSVers = "TODO"
+    if(pushedInfo // 64 == 1):
+        assignTo.VNS = "MOPS version not supported"
+        pushedInfo -= 64
+    else:
+        assignTo.VNS = "MOPS version supported"
+
+
+    if(pushedInfo // 8 == 0):
+        assignTo.VN = "ED102/DO-260"
+    elif(pushedInfo // 8 == 1):
+        assignTo.VN = "DO-260A"
+        pushedInfo -= 8
+    elif(pushedInfo // 8 == 2):
+        assignTo.VN = "ED102A/DO-260B"
+        pushedInfo -= 16
+    elif(pushedInfo // 8 == 3):
+        assignTo.VN = "ED-102B/DO-260C"
+        pushedInfo -= 24
+
+
+    if(pushedInfo == 0):
+        assignTo.LTT = "Other"
+    elif(pushedInfo == 1):
+        assignTo.LTT = "UAT"
+    elif(pushedInfo == 2):
+        assignTo.LTT = "1090 ES"
+    elif(pushedInfo == 3):
+        assignTo.LTT = "VDL 4"
+    else:
+        assignTo.LTT = "Not Assigned"
     return
 
-def assignMode3ACode(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.Mode3ACode = "TODO"
+def assignMode3ACode(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.tempVar = pushedInfo * 256
+        case 1:
+            pushedInfo += assignTo.tempVar
+            pushedInfo = oct(pushedInfo)
+            
+            assignTo.Mode3ACode = pushedInfo
+
     return
 
 def assignRollAngle(pushedInfo, assignTo: ParsedInfo):
@@ -582,14 +870,17 @@ def assignRollAngle(pushedInfo, assignTo: ParsedInfo):
     assignTo.RollAngle = "TODO"
     return
 
-def assignFlightLevel(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.FlightLevel = "TODO"
+def assignFlightLevel(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            print("Case 0")
+            # Figure out 2's compliment then come back to this
+        case 1:
+            print("Case 1")
+            # See above
     return
 
 def assignMagneticHeading(pushedInfo, assignTo: ParsedInfo, counter):
-
-    #TODO: Confirm with Kay
 
     match counter:
         case 0:
@@ -600,8 +891,60 @@ def assignMagneticHeading(pushedInfo, assignTo: ParsedInfo, counter):
     return
 
 def assignTargetStatus(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.TargetStatus = "TODO"
+    if(pushedInfo // 128 == 1):
+        assignTo.ICF = "Intent change flag raised"
+        pushedInfo -= 128
+    else:
+        assignTo.ICF = "No intent change active"
+
+    if(pushedInfo // 64 == 1):
+        assignTo.LNAV = "LNAV mode not engaged"
+        pushedInfo -= 64
+    else:
+        assignTo.LNAV = "LNAV mode engaged"
+    
+    if(pushedInfo // 32 == 1):
+        assignTo.ME = "Military emergency"
+        pushedInfo -= 32
+    else:
+        assignTo.ME = "No military emergency"
+
+    if(pushedInfo // 4 == 0):
+        assignTo.PS = "No emergency/not reported"
+    elif(pushedInfo // 4 == 1):
+        assignTo.PS = "General emergency"
+        pushedInfo -= 4
+    elif(pushedInfo // 4 == 2):
+        assignTo.PS = "Lifeguard/medical emergency"
+        pushedInfo -= 8
+    elif(pushedInfo // 4 == 3):
+        assignTo.PS = "Minimum fuel"
+        pushedInfo -= 12
+    elif(pushedInfo // 4 == 4):
+        assignTo.PS = "No communications"
+        pushedInfo -= 16
+    elif(pushedInfo // 4 == 5):
+        assignTo.PS = "Unlawful interference"
+        pushedInfo -= 20
+    elif(pushedInfo // 4 == 6):
+        assignTo.PS = "Aircraft in distress - automatic activation"
+        pushedInfo -= 24
+    elif(pushedInfo // 4 == 7):
+        assignTo.PS = "Aircraft in distress - manual activation"
+        pushedInfo -= 28
+    
+
+    if(pushedInfo == 0):
+        assignTo.SS = "No condition reported"
+    elif(pushedInfo == 1):
+        assignTo.SS = "Permanent alert (emergency condition)"
+    elif(pushedInfo == 2):
+        assignTo.SS = "Temporary alert"
+    elif(pushedInfo == 3):
+        assignTo.SS = "SPI set"
+    
+    
+
     return
 
 def assignBarometricVerticalRate(pushedInfo, assignTo: ParsedInfo):
@@ -862,10 +1205,13 @@ def getNewInfo(pushedInfoList):
 
     while(len(pushedInfoList) > 0):
         newInfo = pushedInfoList.pop()
-        while(len(newInfo) != 2):
+        print("Testing: ", newInfo)
+        while(len(str(newInfo)) != 2):
             newInfo = pushedInfoList.pop()
+            print("Testing: ", newInfo)
         try:
             newInfo = int(newInfo, 16)
+            print("Found info: ", newInfo)
             return newInfo
         except:
             print("new info not able to be swapped")
@@ -886,6 +1232,7 @@ def parse(pushedInfo: str):
     currentState = "Start"
     stateList = []
     while(len(pushedInfo) > 0):
+        print("============================")
         infoToPush = getNewInfo(pushedInfo)
         print(f"Info: {infoToPush}")
         match currentState:
@@ -1103,6 +1450,17 @@ def parse(pushedInfo: str):
                 currentState = stateList.pop()
                 
 
+            case "MOPS Version":
+                assignMOPSVers(infoToPush, thisMessage)
+                infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+
+            case "Flight Level":
+                for i in range(0, 2):
+                    assignFlightLevel(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+            
             case "Data Source Identification":
                 # 
                 assignDataSource(infoToPush, thisMessage, "first")
@@ -1126,8 +1484,28 @@ def parse(pushedInfo: str):
             # Vehicle Type/ground vehicle? (Emitter Category X)
             # 
             # 
+
+
+            case "Target Status":
+                assignTargetStatus(infoToPush, thisMessage)
+                infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+
+            case "Quality Indicators":
+                keepRunning = True
+                i = 0
+                while(keepRunning):
+                    if(infoToPush % 2 == 0):
+                        keepRunning = False # We've found the last extension - no need to keep going
+                    assignQualityIndicators(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                    i += 1 # Next field extension if needed
+                currentState = stateList.pop()
+
+
+            
             case "Time of Applicability for Position":
-                for i in range(0, 3):
+                for i in range(0, 2):
                     assignTimeOfApplicabilityForPosition(infoToPush, thisMessage, i)
                     infoToPush = getNewInfo(pushedInfo)
                 currentState = stateList.pop()
@@ -1163,8 +1541,33 @@ def parse(pushedInfo: str):
                     assignPosWGS84(infoToPush, thisMessage, i)
                     #newInfo
                     infoToPush = getNewInfo(pushedInfo)
-
                 currentState = stateList.pop()
+            
+            case "Position in WGS-84 coords high res":
+                for i in range(0, 8):
+                    assignPosWGS84HighRes(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+
+            case "Target Address":
+                for i in range(0, 3):
+                    assignTargetAddr(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+
+            case "Time of Message Reception for Position":
+                for i in range(0, 3):
+                    assignMessageReceptionOfPosTime(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+
+            case "Time of Message Reception of Velocity":
+                for i in range(0, 3):
+                    assignMessageReceptionofVel(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo)
+                currentState = stateList.pop()
+                
+
             case "Geometric Height":
                 counter = 0
                 assignGeometricHeight(infoToPush, thisMessage, counter)
