@@ -10,7 +10,7 @@ PORT = int(os.getenv("PORT", "8001"))
 DB_URL_PG = DB_URL.replace("postgresql+psycopg://", "postgresql://")
 
 app = Flask(__name__)
-CORS(app)
+
 
 class ParsedInfo:
     def __init__(self, cat = "",
@@ -29,8 +29,7 @@ class ParsedInfo:
                  TargetReportDescriptor = "", 
                  TrackNumber = "", 
                  ServiceID = "", 
-                 TimeofApplicabilityForPosition = "", 
-                 PosWGS84 = "", PosWGS84HighRes = "", 
+                 TimeofApplicabilityForPosition = 0,
                  TimeOfApplicVelocity = "", 
                  AirSpeed = "", 
                  TrueAirSpeed = "", 
@@ -98,8 +97,10 @@ class ParsedInfo:
         self.TrackNumber = TrackNumber
         self.ServiceID = ServiceID
         self.TimeofApplicabilityForPosition = TimeofApplicabilityForPosition
-        self.PosWGS84 = PosWGS84
-        self.PosWGS84HighRes = PosWGS84HighRes
+        self.PosWGS84Latitude = 0
+        self.PosWGS84Longitude = 0
+        self.PosWGS84HighResLat = 0
+        self.PosWGS84HighResLong = 0
         self.TimeOfApplicVelocity = TimeOfApplicVelocity
         self.AirSpeed = AirSpeed
         self.TrueAirSpeed = TrueAirSpeed
@@ -118,7 +119,8 @@ class ParsedInfo:
         self.TargetStatus = TargetStatus
         self.BarometricVerticalRate = BarometricVerticalRate
         self.GeometricVerticalRate = GeometricVerticalRate
-        self.AirborneGroundVector = AirborneGroundVector
+        self.AGV_GroundSpeed = AirborneGroundVector
+        self.AGV_TrackAngle = 0
         self.TrackAngleRate = TrackAngleRate
         self.TimeReportTransmission = TimeReportTransmission
         self.TargetIdentification = TargetIdentification
@@ -148,16 +150,84 @@ class ParsedInfo:
         self.TBC_Val = TBC_Val
         self.MBC_EP = MBC_EP
         self.MBC_Val = MBC_Val
+        self.NUCr = ""
+        self.NUCp = ""
+        self.NICbaro = ""
+        self.SIL = ""
+        self.NACp = ""
+        self.SILS = ""
+        self.SDA = ""
+        self.GVA = ""
+        self.PIC = ""
+        self.VAL_STATE_EP = ""
+        self.VAL_STATE_Val = ""
+        self.VAL_DIST = 0
+        self.VD = ""
+        self.VQ = ""
+        self.VAL_DIST_QUAL = 0
         self.tempVar = 0
+        self.tempVar2 = 0
+        self.tempVar3 = 0
+        self.VNS = ""
+        self.VN = ""
+        self.LTT = ""
+        self.USE_NEGATIVE_FORM_WGS84 = True
+        self.ICF = ""
+        self.LNAV = ""
+        self.ME = ""
+        self.PS = ""
+        self.SS = ""
+        self.GVR_RE = 0
+        self.AGV_RE = 0
+        self.infoCount = 0
+        self.AOS_RA = ""
+        self.AOS_TC = ""
+        self.AOS_TS = ""
+        self.AOS_ARV = ""
+        self.AOS_CDTIA = ""
+        self.AOS_TCAS = ""
+        self.AOS_SA = ""
 
     def to_dict(self):
 
         testingString = {"Test1", "Test2"}
-        return {"cat": self.cat,
+        return {"Cat": self.cat,
+        "Intent Change flag": self.ICF,
+        "LNAV Mode": self.LNAV,
+        "TCAS Resolution Advisory active": self.AOS_RA,
+        "Target Trajectory Change Report Capability": self.AOS_TC,
+        "Target State Report Capability": self.AOS_TS,
+        "Air-Referenced Velocity Report Capability": self.AOS_ARV,
+        "Cockpit Display of Traffic Information Airborne": self.AOS_CDTIA,
+        "TCAS System Status": self.AOS_TCAS,
+        "Single antenna": self.AOS_SA,
+        "Military Emergency": self.ME,
+        "Priority Status": self.PS,
+        "Surveillance Status": self.SS,
         "System area code": self.systemAreaCode,
+        "Version Support": self.VNS,
+        "Version Number": self.VN,
+        "GVR Range Exceeded": self.GVR_RE,
+        "Airborne Ground Vector Range Exceeded": self.AGV_RE,
+        "Link Technology Type": self.LTT,
         "System Identification Code": self.systemIdentificationCode,
         "TargetReportDescriptor": self.TargetReportDescriptor,
         "Address Type": self.ATP,
+        "Position Integrity Category": self.PIC,
+        "Validation Distance Availability": self.VD,
+        "Validation Distance Quality": self.VQ,
+        "SIL-Supplement": self.SILS,
+        "Position Validation Distance": self.VAL_DIST,
+        "Position Validation Distance Quality": self.VAL_DIST_QUAL,
+        "Position Validation State Element Populated": self.VAL_STATE_EP,
+        "VAL_STATE Value": self.VAL_STATE_Val,
+        "Horizontal Position System Design Assurance Level": self.SDA,
+        "Geometric Altitude Accurace": self.GVA,
+        "Navigation Uncertainty Category for Velocity": self.NUCr,
+        "Navigation Integrity Category": self.NUCp,
+        "Navigation Accuracy Category for Position": self.NACp,
+        "Navigation Integrity Category for Barometric Altitude": self.NICbaro,
+        "Source Integrity Level": self.SIL,
         "Altitude Reporting Capability": self.ARC,
         "Range Check": self.RC,
         "RAB Report Type": self.RAB,
@@ -170,8 +240,10 @@ class ParsedInfo:
         "TrackNumber": self.TrackNumber,
         "ServiceID": self.ServiceID,
         "TimeOfApplicabilityForPosition": self.TimeofApplicabilityForPosition,
-        "PosWGS84": self.PosWGS84,
-        "PosWGS84HighRes":self.PosWGS84HighRes,
+        "PosWGS84Lat": self.PosWGS84Latitude,
+        "PosWGS84Long": self.PosWGS84Longitude,
+        "PosWGS84HighResLat": self.PosWGS84HighResLat,
+        "PosWGS84HighResLong": self.PosWGS84HighResLong,
         "TimeOfApplicVelocity":self.TimeOfApplicVelocity,
         "AirSpeed":self.AirSpeed,
         "TrueAirSpeed": self.TrueAirSpeed,
@@ -190,7 +262,8 @@ class ParsedInfo:
         "TargetStatus":self.TargetStatus,
         "BarometricVerticalRate":self.BarometricVerticalRate,
         "GeometricVerticalRate":self.GeometricVerticalRate,
-        "AirborneGroundVector":self.AirborneGroundVector,
+        "Airborne Ground Vector | Ground Speed":self.AGV_GroundSpeed,
+        "Airborne Ground Vector | Track Angle": self.AGV_TrackAngle,
         "TrackAngleRate":self.TrackAngleRate,
         "TimeReportTransmission":self.TimeReportTransmission,
         "TargetIdentification":self.TargetIdentification,
@@ -449,22 +522,165 @@ def assignServiceID(pushedInfo, assignTo: ParsedInfo):
     assignTo.ServiceID = "TODO"
     return
 
-def assignTimeOfApplicabilityForPosition(pushedInfo, assignTo: ParsedInfo, i):
+def assignTimeOfApplicabilityForPosition(pushedInfo: int, assignTo: ParsedInfo, i):
 
-    
-    # TODO
-    assignTo.TimeofApplicabilityForPosition = "TODO"
+    match i:
+        case 0:
+            pushedInfo = pushedInfo * (2 ** 8)
+            assignTo.TimeofApplicabilityForPosition = float(pushedInfo)
+            print("Time check 1", type(assignTo.TimeofApplicabilityForPosition))
+        case 1:
+            print("type check", type(assignTo.TimeofApplicabilityForPosition))
+            currentTime = float(assignTo.TimeofApplicabilityForPosition)
+            currentTime += float(pushedInfo)
+            assignTo.TimeofApplicabilityForPosition = currentTime
+            print("Time check 2", assignTo.TimeofApplicabilityForPosition)
+        case 2:
+            pushedInfo = pushedInfo / 128
+            assignTo.TimeofApplicabilityForPosition += pushedInfo
+            print("Time check 3", assignTo.TimeofApplicabilityForPosition)
     return
 
-def assignPosWGS84(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.PosWGS84 = "TODO"
+def assignPosWGS84(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            print("Lattitude most significant int: ", pushedInfo)
+            assignTo.tempVar = pushedInfo
+        case 1:
+            print("Lattitude int 2: ", pushedInfo)
+            assignTo.tempVar2 = pushedInfo
+        case 2:
+            
+            print("Lattitude int 3: ", pushedInfo)
+
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+            middle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
+        case 3:
+            print("Longitude most significant int: ", pushedInfo)
+            assignTo.tempVar = pushedInfo
+        case 4:
+            print("Longitude int 2: ", pushedInfo)
+            assignTo.tempVar2 = pushedInfo
+        case 5:
+            print("Longitude int 3: ", pushedInfo)
+
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+            middle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
+
+
     return
 
-def assignPosWGS84HighRes(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.posWGS84HighRes = "TODO"
+def assignPosWGS84HighRes(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            print("Lattitude most significant int: ", pushedInfo)
+            assignTo.tempVar = pushedInfo
+        case 1:
+            print("Lattitude int 2: ", pushedInfo)
+            assignTo.tempVar2 = pushedInfo
+        case 2:
+            
+            print("Lattitude int 3: ", pushedInfo)
+            assignTo.tempVar3 = pushedInfo
+
+            
+        case 3:
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+
+            print("Lattitude int 4: ", pushedInfo)
+
+            frontback8 = assignTo.tempVar3
+            assignTo.tempVar3 = 0 
+
+
+
+            frontmiddle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
+        case 4:
+            print("Longitude int 1: ", pushedInfo)
+            assignTo.tempVar = pushedInfo
+        case 5:
+            print("Longitude int 2: ", pushedInfo)
+
+            assignTo.tempVar2 = pushedInfo
+        case 6:
+            print("Longitude int 3: ", pushedInfo)
+            assignTo.tempVar3 = pushedInfo
+        
+        case 7:
+            print("Longitude int 4: ", pushedInfo)
+
+            # TODO I GOT NO CLUE HOW THIS STUFF SHOULD BE WORKING AHHHHHHHH
+
+            frontback8 = assignTo.tempVar3
+            assignTo.tempVar3 = 0 
+
+
+
+            frontmiddle8 = assignTo.tempVar2
+            assignTo.tempVar2 = 0
+
+            front8 = assignTo.tempVar
+            assignTo.tempVar = 0
+
+
+
+
+
+            # Idea: Instead of doing subtraction, convert from signed to unsigned using byte translation
+
+            assignTo.PosWGS84Latitude = pushedInfo
+            if(not assignTo.USE_NEGATIVE_FORM_WGS84):
+                assignTo.PosWGS84Latitude = -1 * assignTo.PosWGS84Latitude
+            assignTo.tempVar = 0
+
+
     return
+
 
 def assignTimeOfApplicVelocity(pushedInfo, assignTo: ParsedInfo):
     # TODO
@@ -481,14 +697,29 @@ def assignTrueAirSpeed(pushedInfo, assignTo: ParsedInfo):
     assignTo.TrueAirSpeed = "TODO"
     return
 
-def assignTargetAddr(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.TargetAddr = "TODO"
+def assignTargetAddr(pushedInfo, assignTo: ParsedInfo, i):
+
+    match i:
+        case 0:
+            pushedInfo = pushedInfo * 256 * 256
+            assignTo.TargetAddr = pushedInfo
+        case 1:
+            pushedInfo = pushedInfo * 256
+            assignTo.TargetAddr += pushedInfo
+        case 2:
+            assignTo.TargetAddr += pushedInfo
+
+
     return
 
-def assignMessageReceptionOfPosTime(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.MessageReceptionOfPosTime = "TODO"
+def assignMessageReceptionOfPosTime(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.MessageReceptionOfPosTime = pushedInfo * (2 ** 10)
+        case 1:
+            assignTo.MessageReceptionOfPosTime += pushedInfo * 2
+        case 2:
+            assignTo.MessageReceptionOfPosTime += pushedInfo * (2 ** -7)
     return
 
 def assignMessageReceptionOfPosTimeHighPres(pushedInfo, assignTo: ParsedInfo):
@@ -496,9 +727,15 @@ def assignMessageReceptionOfPosTimeHighPres(pushedInfo, assignTo: ParsedInfo):
     assignTo.MessageReceptionOfPosTimeHighPres = "TODO"
     return
 
-def assignMessageReceptionofVel(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.MessageReceptionofVel = "TODO"
+def assignMessageReceptionofVel(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.MessageReceptionofVel = pushedInfo * (2 ** 10)
+        case 1:
+            assignTo.MessageReceptionofVel += pushedInfo * 2
+        case 2:
+            assignTo.MessageReceptionofVel += pushedInfo * (2 ** -7)
+    return
     return
 
 def assignTimeMessageReceptionVelHighP(pushedInfo, assignTo: ParsedInfo):
@@ -514,19 +751,148 @@ def assignGeometricHeight(pushedInfo, assignTo: ParsedInfo, counter):
             assignTo.GeometricHeight += pushedInfo
     return
 
-def assignQualityIndicators(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.GeometricHeight = "TODO"
+def assignQualityIndicators(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            # First primary subfield
+
+
+            # There is a faster way to calc NUCr that takes up less lines
+            # This is the readable form - bit-by-bit
+
+            #if(pushedInfo // 128 == 1):
+            #    assignTo.NUCr += 4
+            #    pushedInfo -= 128
+            #if(pushedInfo // 64 == 1):
+            #    assignTo.NUCr += 2
+            #    pushedInfo -= 64
+            #if(pushedInfo // 32 == 1):
+            #    assignTo.NUCr += 1
+
+            # Here is the faster way to do so:
+            assignTo.NUCr = pushedInfo // 32
+            pushedInfo -= assignTo.NUCr * 32
+
+            assignTo.NUCp = pushedInfo // 2
+            pushedInfo -= assignTo.NUCp * 2
+        case 1:
+            assignTo.NICbaro = pushedInfo // 128
+            pushedInfo -= assignTo.NICbaro * 128
+
+            assignTo.SIL = pushedInfo // 32
+            pushedInfo -= assignTo.SIL * 32
+
+            assignTo.NACp = pushedInfo // 2
+            pushedInfo -= assignTo.NACp * 2
+        case 2:
+            if(pushedInfo // 32 == 1):
+                assignTo.SILS = "Measured per flight-hour"
+                pushedInfo -= 32
+            else:
+                assignTo.SILS = "Measured per sample"
+            
+            assignTo.SDA = pushedInfo // 8
+            pushedInfo -= assignTo.SDA * 8
+
+            assignTo.GVA = pushedInfo // 2
+            pushedInfo -= assignTo.GVA * 2
+        case 3:
+            # Don't understand what the PIC stuff is asking, storing values, 
+            # not super important for the project, can be done later TODO
+            assignTo.PIC = pushedInfo // 16
+            pushedInfo -= assignTo.PIC * 16
+
+            assignTo.SRC = pushedInfo // 8
+        case 4:
+            assignTo.VAL_STATE_EP = pushedInfo // 32
+            pushedInfo -= assignTo.VAL_STATE_EP * 32
+
+            if(pushedInfo // 8 == 0):
+                assignTo.VAL_STATE_Val = "Validation not performed"
+            elif (pushedInfo // 8 == 1):
+                assignTo.VAL_STATE_Val = "Validation performed without pass/fail"
+                pushedInfo -= 8
+            elif (pushedInfo // 8 == 2):
+                assignTo.VAL_STATE_Val = "Validation pass"
+                pushedInfo -= 16
+            elif (pushedInfo // 8 == 3): 
+                assignTo.VAL_STATE_Val = "Validation fail"
+                pushedInfo -= 24
+            
+            assignTo.VD = pushedInfo // 4
+            pushedInfo -= assignTo.VD * 4
+
+            assignTo.VQ = pushedInfo // 2
+            pushedInfo -= assignTo.VQ * 2
+        case 5:
+            # multiply by 128 and set num to this
+            pushedInfo = pushedInfo // 2
+            pushedInfo = pushedInfo * 128
+            assignTo.VAL_DIST = pushedInfo
+        case 6:
+            assignTo.VAL_DIST += (pushedInfo // 2)
+        case 7:
+            pushedInfo = pushedInfo // 2
+            pushedInfo = pushedInfo * 128
+            assignTo.VAL_DIST_QUAL = pushedInfo
+        case 8:
+            assignTo.VAL_DIST_QUAL += (pushedInfo // 2)
+
+
+
+        
+            
+
+
+            
+
+
+
     return
 
 def assignMOPSVers(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.MOPSVers = "TODO"
+    if(pushedInfo // 64 == 1):
+        assignTo.VNS = "MOPS version not supported"
+        pushedInfo -= 64
+    else:
+        assignTo.VNS = "MOPS version supported"
+
+
+    if(pushedInfo // 8 == 0):
+        assignTo.VN = "ED102/DO-260"
+    elif(pushedInfo // 8 == 1):
+        assignTo.VN = "DO-260A"
+        pushedInfo -= 8
+    elif(pushedInfo // 8 == 2):
+        assignTo.VN = "ED102A/DO-260B"
+        pushedInfo -= 16
+    elif(pushedInfo // 8 == 3):
+        assignTo.VN = "ED-102B/DO-260C"
+        pushedInfo -= 24
+
+
+    if(pushedInfo == 0):
+        assignTo.LTT = "Other"
+    elif(pushedInfo == 1):
+        assignTo.LTT = "UAT"
+    elif(pushedInfo == 2):
+        assignTo.LTT = "1090 ES"
+    elif(pushedInfo == 3):
+        assignTo.LTT = "VDL 4"
+    else:
+        assignTo.LTT = "Not Assigned"
     return
 
-def assignMode3ACode(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.Mode3ACode = "TODO"
+def assignMode3ACode(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.tempVar = pushedInfo * 256
+        case 1:
+            pushedInfo += assignTo.tempVar
+            pushedInfo = oct(pushedInfo)
+            
+            assignTo.Mode3ACode = pushedInfo
+
     return
 
 def assignRollAngle(pushedInfo, assignTo: ParsedInfo):
@@ -534,14 +900,17 @@ def assignRollAngle(pushedInfo, assignTo: ParsedInfo):
     assignTo.RollAngle = "TODO"
     return
 
-def assignFlightLevel(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.FlightLevel = "TODO"
+def assignFlightLevel(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            print("Case 0")
+            # Figure out 2's compliment then come back to this
+        case 1:
+            print("Case 1")
+            # See above
     return
 
 def assignMagneticHeading(pushedInfo, assignTo: ParsedInfo, counter):
-
-    #TODO: Confirm with Kay
 
     match counter:
         case 0:
@@ -552,8 +921,60 @@ def assignMagneticHeading(pushedInfo, assignTo: ParsedInfo, counter):
     return
 
 def assignTargetStatus(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.TargetStatus = "TODO"
+    if(pushedInfo // 128 == 1):
+        assignTo.ICF = "Intent change flag raised"
+        pushedInfo -= 128
+    else:
+        assignTo.ICF = "No intent change active"
+
+    if(pushedInfo // 64 == 1):
+        assignTo.LNAV = "LNAV mode not engaged"
+        pushedInfo -= 64
+    else:
+        assignTo.LNAV = "LNAV mode engaged"
+    
+    if(pushedInfo // 32 == 1):
+        assignTo.ME = "Military emergency"
+        pushedInfo -= 32
+    else:
+        assignTo.ME = "No military emergency"
+
+    if(pushedInfo // 4 == 0):
+        assignTo.PS = "No emergency/not reported"
+    elif(pushedInfo // 4 == 1):
+        assignTo.PS = "General emergency"
+        pushedInfo -= 4
+    elif(pushedInfo // 4 == 2):
+        assignTo.PS = "Lifeguard/medical emergency"
+        pushedInfo -= 8
+    elif(pushedInfo // 4 == 3):
+        assignTo.PS = "Minimum fuel"
+        pushedInfo -= 12
+    elif(pushedInfo // 4 == 4):
+        assignTo.PS = "No communications"
+        pushedInfo -= 16
+    elif(pushedInfo // 4 == 5):
+        assignTo.PS = "Unlawful interference"
+        pushedInfo -= 20
+    elif(pushedInfo // 4 == 6):
+        assignTo.PS = "Aircraft in distress - automatic activation"
+        pushedInfo -= 24
+    elif(pushedInfo // 4 == 7):
+        assignTo.PS = "Aircraft in distress - manual activation"
+        pushedInfo -= 28
+    
+
+    if(pushedInfo == 0):
+        assignTo.SS = "No condition reported"
+    elif(pushedInfo == 1):
+        assignTo.SS = "Permanent alert (emergency condition)"
+    elif(pushedInfo == 2):
+        assignTo.SS = "Temporary alert"
+    elif(pushedInfo == 3):
+        assignTo.SS = "SPI set"
+    
+    
+
     return
 
 def assignBarometricVerticalRate(pushedInfo, assignTo: ParsedInfo):
@@ -561,14 +982,46 @@ def assignBarometricVerticalRate(pushedInfo, assignTo: ParsedInfo):
     assignTo.BarometricVerticalRate = "TODO"
     return
 
-def assignGeometricVerticalRate(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.GeometricVerticalRate = "TODO"
+def assignGeometricVerticalRate(pushedInfo, assignTo: ParsedInfo, i):
+
+    # Two's compliment form - redo once 2's compliment is figured out TODO
+    # case 0 is about size of 25 * (2 ** 6)
+    # case 1 is about size of 25 * (2 ** -2)
+    match i:
+        case 0:
+            print("Case 0")
+            if(pushedInfo // 128 == 1):
+                assignTo.GVR_RE = "value exceeds defined range"
+                pushedInfo -= 128
+            else:
+                assignTo.GVR_RE = "Value in defined range"
+        case 1:
+            print("Case 1")
     return
 
-def assignAirborneGroundVector(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.GeometricVerticalRate = "TODO"
+def assignAirborneGroundVector(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            if(pushedInfo // 128 == 1):
+                assignTo.AGV_RE = "Value exceeds defined range"
+                pushedInfo -= 128
+            else:
+                assignTo.AGV_RE = "Value in defined range"
+
+            # Case 0: pushedInfo * (2 ** -6)
+            assignTo.AGV_GroundSpeed = pushedInfo * (2 ** -6)
+
+        case 1:
+            assignTo.AGV_GroundSpeed += pushedInfo * (2 ** -14)
+
+        case 2:
+            assignTo.AGV_TrackAngle = pushedInfo * 360 * (2 ** -8)
+        case 3:
+            assignTo.AGV_TrackAngle += pushedInfo * 360 * (2 ** -16)
+
+
+            
+
     return
 
 def assignTrackAngleRate(pushedInfo, assignTo: ParsedInfo):
@@ -576,9 +1029,14 @@ def assignTrackAngleRate(pushedInfo, assignTo: ParsedInfo):
     assignTo.TrackAngleRate = "TODO"
     return
 
-def assignTimeReportTransmission(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.TrackAngleRate = "TODO"
+def assignTimeReportTransmission(pushedInfo, assignTo: ParsedInfo, i):
+    match i:
+        case 0:
+            assignTo.TimeReportTransmission = pushedInfo * (2 ** 9)
+        case 1:
+            assignTo.TimeReportTransmission += pushedInfo * 2
+        case 2:
+            assignTo.TimeReportTransmission += pushedInfo * (2 ** -7)
     return
 
 def assignTargetIdentification(pushedInfo, assignTo: ParsedInfo, i):
@@ -764,8 +1222,55 @@ def assignServManagement(pushedInfo, assignTo: ParsedInfo):
     return
 
 def assignAircraftOpStatus(pushedInfo, assignTo: ParsedInfo):
-    # TODO
-    assignTo.AircraftOpStatus = "TODO"
+    if(pushedInfo // 128 == 1):
+        assignTo.AOS_RA = "TCAS RA active"
+        pushedInfo -= 128
+    else:
+        assignTo.AOS_RA = "TCAS II or ACAS RA not active"
+    
+
+    if(pushedInfo // 32 == 0):
+        assignTo.AOS_TC = "No capability for Trajectory Change Reports"
+    elif(pushedInfo // 32 == 1):
+        assignTo.AOS_TC = "Support for TC+0 reports only"
+        pushedInfo -= 32
+    elif(pushedInfo // 32 == 2):
+        assignTo.AOS_TC = "Support for multiple TC reports"
+        pushedInfo -= 64
+    elif(pushedInfo // 32 == 3):
+        assignTo.AOS_TC = "reserved"
+        pushedInfo -= 96
+
+    if(pushedInfo // 16 == 1):
+        assignTo.AOS_TS = "Capable of supporting target State Reports"
+        pushedInfo -= 16
+    else:
+        assignTo.AOS_TS = "no capability to support Target State Reports"
+    
+
+    if(pushedInfo // 8 == 1):
+        assignTo.AOS_ARV = "capable of generate ARV-reports"
+        pushedInfo -= 8
+    else:
+        assignTo.AOS_ARV = "no capability to generate ARV-reports"
+
+    if(pushedInfo // 4 == 1):
+        assignTo.AOS_CDTIA = "CDTI operational"
+        pushedInfo -= 4
+    else:
+        assignTo.AOS_ARV = "CDTIA not operational"
+
+    if(pushedInfo // 2 == 1):
+        assignTo.AOS_TCAS = "TCAS not operational"
+        pushedInfo -= 2
+    else:
+        assignTo.AOS_TCAS = "TCAS operational"
+
+    if (pushedInfo == 1):
+        assignTo.AOS_SA = "Single antenna only"
+    else:
+        assignTo.AOS_SA = "Antenna Diversity"
+
     return
 
 def assignSurfaceCapabilitiesAndCharacteristics(pushedInfo, assignTo: ParsedInfo):
@@ -808,16 +1313,21 @@ def assignSpecialPurposeField(pushedInfo, assignTo: ParsedInfo):
     assignTo.SpecialPurposeField = "TODO"
     return
 
-def getNewInfo(pushedInfoList):
+def getNewInfo(pushedInfoList, assignTo):
     #TODO - popping new info and returning it, but also error checking beforehand. 
     # Needs while loop to make sure of str len 2, along with a try/except of translating from string to hex representation of an int
 
     while(len(pushedInfoList) > 0):
         newInfo = pushedInfoList.pop()
-        while(len(newInfo) != 2):
+        print("Testing: ", newInfo)
+        while(len(str(newInfo)) != 2 and len(pushedInfoList) > 0):
             newInfo = pushedInfoList.pop()
+            print("Testing: ", newInfo)
         try:
             newInfo = int(newInfo, 16)
+            print("Found info: ", newInfo)
+            assignTo.infoCount += 1
+            print("Info used: ", assignTo.infoCount)
             return newInfo
         except:
             print("new info not able to be swapped")
@@ -833,13 +1343,17 @@ def parse(pushedInfo: str):
 
 
     thisMessage = ParsedInfo()
+    infoCount = 0
 
     print(pushedInfo)
     currentState = "Start"
     stateList = []
+    startLength = len(pushedInfo)
+    infoToPush = getNewInfo(pushedInfo, thisMessage)
     while(len(pushedInfo) > 0):
-        infoToPush = getNewInfo(pushedInfo)
+        print("============================")
         print(f"Info: {infoToPush}")
+        print("Current state: ", currentState)
         match currentState:
             case "Start":
                 print("CAT Assigned:")
@@ -848,9 +1362,10 @@ def parse(pushedInfo: str):
 
                 # Deals with length: not needed to be found since python already has libraries that find this information
                 # and we already use this information to build the byte array
-                length = getNewInfo(pushedInfo) * 256
+                length = getNewInfo(pushedInfo, thisMessage) * 256
                 # two octets (bytes)
-                length += getNewInfo(pushedInfo)
+                length += getNewInfo(pushedInfo, thisMessage)
+                infoToPush = getNewInfo(pushedInfo, thisMessage)
                 thisMessage.length = length
                 # Next information is the fspec
                 currentState = "First fspec"
@@ -884,8 +1399,9 @@ def parse(pushedInfo: str):
                 # After going through the bytes:
                 if(infoToPush % 2 == 1):
                     currentState = "Second fspec"
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                 else:
-                    
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                     stateList.reverse()
                     currentState = stateList.pop()
             case "Second fspec":
@@ -913,8 +1429,9 @@ def parse(pushedInfo: str):
                     stateList.append("Time of Message Reception of Velocity")
                 if(infoToPush % 2 == 1):
                     currentState = "Third fspec"
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                 else:
-                    
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                     stateList.reverse()
                     currentState = stateList.pop()
 
@@ -942,8 +1459,9 @@ def parse(pushedInfo: str):
                     stateList.append("Flight Level")
                 if(infoToPush % 2 == 1):
                     currentState = "Fourth fspec"
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                 else:
-                    
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                     stateList.reverse()
                     currentState = stateList.pop()
 
@@ -971,8 +1489,9 @@ def parse(pushedInfo: str):
                     stateList.append("Time of Report Transmission")
                 if(infoToPush % 2 == 1):
                     currentState = "Fifth fspec"
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                 else:
-                    
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                     stateList.reverse()
                     currentState = stateList.pop()
             
@@ -1000,11 +1519,11 @@ def parse(pushedInfo: str):
                     stateList.append("Service Management")
                 if(infoToPush % 2 == 1):
                     currentState = "Sixth fspec"
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                 else:
-                    
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                     stateList.reverse()
                     currentState = stateList.pop()
-                print("----------")
             
             case "Sixth fspec":
                 print("Sixth fspec")
@@ -1030,10 +1549,11 @@ def parse(pushedInfo: str):
                     stateList.append("Data Ages")
                 if(infoToPush % 2 == 1):
                     currentState = "Seventh fspec"
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
                 else:
                     stateList.reverse()
                     currentState = stateList.pop()
-                print("------------")
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
 
             case "Seventh fspec":
                 print("Seventh fspec")
@@ -1053,19 +1573,30 @@ def parse(pushedInfo: str):
                 print("FSPEC finished, stateList: ", str(stateList))
                 stateList.reverse()
                 currentState = stateList.pop()
+                infoToPush = getNewInfo(pushedInfo, thisMessage)
                 
 
+            case "MOPS Version":
+                assignMOPSVers(infoToPush, thisMessage)
+                infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+                print("EXIT MOPS VERSION")
+
+            case "Flight Level":
+                for i in range(0, 2):
+                    assignFlightLevel(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+                print("EXIT FLIGHT LEVEL")
+            
             case "Data Source Identification":
                 # 
                 assignDataSource(infoToPush, thisMessage, "first")
-                infoToPush = pushedInfo.pop()
-                while(len(str(infoToPush)) != 2):
-                    # Use the string length in order to determine whether this is actually something we need or not
-                    infoToPush = pushedInfo.pop()
-                infoToPush = int(infoToPush, 16)
+                infoToPush = getNewInfo(pushedInfo, thisMessage)
                 
                 assignDataSource(infoToPush, thisMessage, "second")
                 currentState = stateList.pop()
+                print("EXIT DATA SOURCE IDENTIFICATION")
             # Data needed to display:
             # TODO IMPORTANTINFO
             # Altitude (Geometric Height X, )
@@ -1079,6 +1610,44 @@ def parse(pushedInfo: str):
             # 
             # 
 
+
+            case "Target Status":
+                assignTargetStatus(infoToPush, thisMessage)
+                currentState = stateList.pop()
+                print("EXIT TARGET STATUS")
+            case "Quality Indicators":
+                keepRunning = True
+                i = 0
+                while(keepRunning):
+                    if(infoToPush % 2 == 0):
+                        keepRunning = False # We've found the last extension - no need to keep going
+                    assignQualityIndicators(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
+                    i += 1 # Next field extension if needed
+                currentState = stateList.pop()
+                print("EXIT QUALITY INDICATORS")
+
+
+            
+            case "Time of Applicability for Position":
+                for i in range(0, 2):
+                    assignTimeOfApplicabilityForPosition(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+                print("EXIT TIME OF APPLICABILITY FOR POSITION")
+
+            case "Airborne Ground Vector":
+
+                print("SHOULD BE SIZE OF: 4")
+        
+                for i in range(0, 4):
+                    assignAirborneGroundVector(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
+
+                currentState = stateList.pop()
+
+                print("EXIT AIRBORNE GROUND VECTOR")
+
             case "Target Report Descripton":
                 hasValues = True
                 counter = 0
@@ -1089,12 +1658,7 @@ def parse(pushedInfo: str):
                         # Extension case - hasValues doesn't update, 
                         assignTargetReportDescriptor(infoToPush, thisMessage, counter)
                         counter += 1
-                        infoToPush = pushedInfo.pop()
-                        while(len(str(infoToPush)) != 2):
-                            # Use the string length in order to determine whether this is actually something we need or not
-                            infoToPush = pushedInfo.pop()
-                        infoToPush = int(infoToPush, 16)
-                        print("New Info: ", infoToPush)
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
                         if(counter == 5):
                             print("ERROR DETECTED: TOO MANY EXTENSIONS")
                             thisMessage.DELETE_EVERYTHING = True
@@ -1105,34 +1669,96 @@ def parse(pushedInfo: str):
                         assignTargetReportDescriptor(infoToPush, thisMessage, counter)
                         print("New Info: ", infoToPush)
                         hasValues = False
+
+                print("EXIT TARGET REPORT DESCRIPTION")
+            case "Position in WGS-84 co-ordinates":
+                for i in range(0, 6):
+                    #do this
+                    assignPosWGS84(infoToPush, thisMessage, i)
+                    #newInfo
+                    if(i != 5):
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+
+                print("EXIT POSITION IN WGS-84 COORDINATES")
             
+            case "Position in WGS-84 coords high res":
+                for i in range(0, 8):
+                    assignPosWGS84HighRes(infoToPush, thisMessage, i)
+                    if(i != 7):
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+                print("EXIT POSITION IN WGS-84 COORDS HIGH RES")
+
+            case "Target Address":
+                for i in range(0, 3):
+                    assignTargetAddr(infoToPush, thisMessage, i)
+                    if(i != 2):
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+
+                print("EXIT TARGET ADDRESS")
+
+            case "Time of Message Reception for Position":
+                for i in range(0, 3):
+                    assignMessageReceptionOfPosTime(infoToPush, thisMessage, i)
+                    if(i != 2):
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+
+                print("EXIT TIME OF MESSAGE RECEPTION FOR POSITION")
+
+            case "Time of Message Reception of Velocity":
+                for i in range(0, 3):
+                    assignMessageReceptionofVel(infoToPush, thisMessage, i)
+                    if(i != 2):
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+
+                print("EXIT TIME OF MESSAGE RECEPTION OF VELOCITY")
+                
+
             case "Geometric Height":
                 counter = 0
                 assignGeometricHeight(infoToPush, thisMessage, counter)
-                infoToPush = getNewInfo(pushedInfo)
+                infoToPush = getNewInfo(pushedInfo, thisMessage)
                 counter += 1
                 assignGeometricHeight(infoToPush, thisMessage, counter)
                 currentState = stateList.pop()
+                print("EXIT GEOMETRIC HEIGHT")
 
             case "Magnetic Heading":
                 counter = 0
                 assignMagneticHeading(infoToPush, thisMessage, counter)
-                infoToPush = getNewInfo(pushedInfo)
+                infoToPush = getNewInfo(pushedInfo, thisMessage)
                 counter += 1
                 assignMagneticHeading(infoToPush, thisMessage, counter)
                 currentState = stateList.pop()
 
+                print("EXIT MAGNETIC HEADING")
+
             case "Emitter Category":
                 assignEmitterCategory(infoToPush, thisMessage)
                 currentState = stateList.pop()
+                print("EXIT EMITTER CATEGORY")
+
             case "Target Identification":
                 for i in range(0, 6):
                     assignTargetIdentification(infoToPush, thisMessage, i)
-                    infoToPush = getNewInfo(pushedInfo)
+                    if(i != 5):
+                        infoToPush = getNewInfo(pushedInfo, thisMessage)
                     
                 currentState = stateList.pop()
+                print("EXIT TARGET IDENTIFICATION")
+
+            case "Time of Report Transmission":
+                for i in range(0, 3):
+                    assignTimeReportTransmission(infoToPush, thisMessage, i)
+                    infoToPush = getNewInfo(pushedInfo, thisMessage)
+                currentState = stateList.pop()
+                print("EXIT TIME OF APPLICABILITY FOR POSITION")
             
-                
+            
             case "end":     
                 break
             case _:

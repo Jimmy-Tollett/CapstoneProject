@@ -15,9 +15,25 @@ c1: 1100 0001 29-35 FRN 29,30 are present and it continues
 
 FRN1: 
 	df: sac
-	0c: sic
+	0c: 0000 1100 sic and topic is ended
+	
+	00: 0000 0000 Target Report Descriptor, TRD is ended
+	
+	01: 0000 0001 TAP += 1 * 2^9
+	00: 0000 0000 TAP += 0 * 2^1
+	7a: 0111 1010 TAP += 122 * 2^(-7)
+
+	e0: 1110 0000 PosWGS84Lat += 
+	62: 0110 0010 PosWGS84Lat 
+	19: 0001 1001 PosWGS84Lat
+
+	92: 1001 0010 PosWGS84Long
+	6f: 0110 1111 PosWGS84Long
+	ba: 1011 1010 PosWGS84Long
+
 
 FRN2:
-	00:
+	
+
 	
 FRN3:
