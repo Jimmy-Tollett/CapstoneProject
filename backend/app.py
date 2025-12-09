@@ -1,6 +1,7 @@
 import os, socket, psycopg
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from simulator import simulate
 
 
 

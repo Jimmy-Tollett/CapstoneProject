@@ -1,4 +1,13 @@
-from flask import Flask, jsonify
+import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+DB_URL = os.getenv("DB_URL", "postgresql+psycopg://atc:atcpass@db:5432/adsb")
+PORT = int(os.getenv("PORT", "8001"))
+
+# psycopg connection string for 'psycopg' must not include the SQLAlchemy prefix
+# so we normalize if the user passed postgresql+psycopg://
+DB_URL_PG = DB_URL.replace("postgresql+psycopg://", "postgresql://")
 
 app = Flask(__name__)
 
@@ -1658,6 +1667,7 @@ def parse(pushedInfo: str):
                     else:
                         currentState = stateList.pop()
                         assignTargetReportDescriptor(infoToPush, thisMessage, counter)
+                        print("New Info: ", infoToPush)
                         hasValues = False
 
                 print("EXIT TARGET REPORT DESCRIPTION")
