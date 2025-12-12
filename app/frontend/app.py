@@ -52,11 +52,17 @@ def get_aircraft():
         response.raise_for_status()
 
         # Transform backend field names to frontend format
+        # Use icao_addr as unique ID to prevent duplicates
         aircraft = []
-        for i, plane in enumerate(response.json()):
+        seen_icao = set()
+        for plane in response.json():
+            icao = plane.get("icao_addr")
+            if icao in seen_icao:
+                continue  # Skip duplicate
+            seen_icao.add(icao)
             aircraft.append({
-                "id": i + 1,
-                "callsign": plane.get("callsign") or plane.get("icao_addr"),
+                "id": icao,  # Use icao_addr as unique ID
+                "callsign": plane.get("callsign") or icao,
                 "latitude": plane["lat"],
                 "longitude": plane["lon"],
                 "altitude": plane.get("altitude") or 0,

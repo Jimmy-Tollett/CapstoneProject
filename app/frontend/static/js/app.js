@@ -144,15 +144,34 @@ class ATCSystem {
      * Update aircraft markers on the map
      */
     updateAircraftOnMap(aircraftData) {
+        // Remember which aircraft was selected (by ID)
+        const selectedId = this.selectedAircraft ? this.selectedAircraft.id : null;
+
         // Clear existing markers
-        this.aircraftMarkers.forEach(marker => {
+        this.aircraftMarkers.forEach(({marker}) => {
             this.map.removeLayer(marker);
         });
         this.aircraftMarkers.clear();
 
+        // Reset selection state before adding new markers
+        this.selectedAircraft = null;
+
         // Add new markers
         aircraftData.forEach(aircraft => {
             this.addAircraftMarker(aircraft);
+
+            // Restore selection if this was the selected aircraft
+            if (selectedId && aircraft.id === selectedId) {
+                const markerData = this.aircraftMarkers.get(aircraft.id);
+                if (markerData) {
+                    this.selectedAircraft = aircraft;
+                    const markerElement = markerData.marker.getElement();
+                    if (markerElement) {
+                        markerElement.classList.add('selected');
+                    }
+                    this.updateAircraftInfoPanel(aircraft);
+                }
+            }
         });
     }
 
@@ -160,12 +179,15 @@ class ATCSystem {
      * Add a single aircraft marker to the map
      */
     addAircraftMarker(aircraft) {
-        // Create custom icon
+        // Create custom airplane icon with rotation based on heading
+        const heading = aircraft.heading || 0;
         const markerIcon = L.divIcon({
             className: 'aircraft-marker',
-            html: '✈',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
+            html: `<svg viewBox="0 0 24 24" style="transform: rotate(${heading}deg)">
+                <path fill="currentColor" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+            </svg>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
         });
 
         // Create marker

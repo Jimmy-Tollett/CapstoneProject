@@ -208,25 +208,32 @@ body {
 
 /* Aircraft Marker Styles */
 .aircraft-marker {
-    background-color: #3182ce;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    width: 12px;
-    height: 12px;
+    background: transparent;
+    border: none;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 8px;
-    font-weight: bold;
-    color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    color: #3182ce;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    transition: color 0.2s, transform 0.2s;
+}
+
+.aircraft-marker svg {
+    width: 100%;
+    height: 100%;
+}
+
+.aircraft-marker:hover {
+    color: #63b3ed;
+    transform: scale(1.1);
 }
 
 .aircraft-marker.selected {
-    background-color: #f56565;
-    width: 16px;
-    height: 16px;
-    transform: scale(1.2);
+    color: #f56565;
+    transform: scale(1.3);
+    filter: drop-shadow(0 2px 4px rgba(245, 101, 101, 0.5));
 }
 
 /* Aircraft Popup */
